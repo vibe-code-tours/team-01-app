@@ -1,0 +1,51 @@
+{
+  "name": "Water Delivery Dev",
+  "dockerComposeFile": "docker-compose.devcontainer.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [3005, 3006, 5433, 6380, 4983],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "terminal.integrated.profiles.linux": {
+          "bash": { "path": "/bin/bash" },
+          "zsh": { "path": "/bin/zsh" }
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.vscode-typescript-next",
+        "anthropic.claude-code"
+      ]
+    }
+  },
+  "postCreateCommand": "sudo chown -R node:node /workspace /home/node/.claude 2>/dev/null || true && npm install && CLAUDE_ENV_MODE=setup bash .devcontainer/claude-env.sh",
+  "postStartCommand": "sudo chown -R node:node /home/node/.claude 2>/dev/null || true && CLAUDE_ENV_MODE=setup bash .devcontainer/claude-env.sh && echo '✅ Dev container ready! Claude: claude | Infra: docker compose up -d postgres redis | DB UI: npm run db:studio'",
+  "remoteUser": "node",
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
+  ],
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
+    "SHELL": "/bin/zsh",
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true,
+      "installZsh": true
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+    "ghcr.io/devcontainers/features/docker-from-docker:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  }
+}
