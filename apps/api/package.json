@@ -1,0 +1,26 @@
+{
+  "name": "@water-delivery/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/passkey": "^1.6.23",
+    "@hono/node-server": "^1.13.0",
+    "@water-delivery/db": "file:../../packages/db",
+    "@water-delivery/shared": "file:../../packages/shared",
+    "better-auth": "^1.6.23",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.6.0",
+    "socket.io": "^4.8.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
