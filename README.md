@@ -1,69 +1,177 @@
-<!--
-  Vibe Code Tours — Project Starter
-  A ready-to-build repo with CI, security scanning, and team practices baked in.
-  Click "Use this template" → "Create a new repository" to start your project.
-  Then replace THIS README with your project's own (keep the Quickstart working).
--->
+# 💧 Yay Thal Pya Zat
 
-# {{PROJECT_NAME}}
+Fresh water delivered to your door — a full-stack water delivery platform with landing page SPA, REST API, real-time WebSocket support, and mobile app (Flutter).
 
-> One line: what you're building, and for which real user.
+## Status
 
-![ci](../../actions/workflows/ci.yml/badge.svg) ![security](../../actions/workflows/security.yml/badge.svg)
+| Layer        | Status      |
+| ------------ | ----------- |
+| Frontend SPA | ✅ Complete  |
+| Backend API  | 🔨 In Progress |
+| Mobile App   | 📋 Planned   |
 
-<!-- A screenshot or GIF of the app goes here — it's the best README section. -->
+## Tech Stack
 
----
+| Layer     | Technology                                |
+| --------- | ----------------------------------------- |
+| Frontend  | Next.js 15 + DaisyUI v5 + Tailwind CSS v4 |
+| Backend   | Hono v4 + @hono/node-server               |
+| ORM       | Drizzle ORM                               |
+| Database  | PostgreSQL 16                             |
+| Cache     | Redis 7                                   |
+| Real-time | Socket.IO v4                              |
+| Auth      | JWT + bcryptjs                            |
+| Mobile    | Flutter + Dart                            |
+| Runtime   | Node.js 22                                |
+| Monorepo  | npm workspaces                            |
 
-## Quickstart
+## Project Structure
 
-```bash
-git clone <your-repo-url> && cd <repo>
-cp .env.example .env        # fill in real values LOCALLY — never commit .env
-# then, for your stack:
-npm install && npm run dev  # Node    (or)
-# pip install -r requirements.txt && python -m app   # Python
+```
+water-delivery/
+├── apps/
+│   ├── api/                    # Hono API server
+│   │   └── src/
+│   │       ├── index.ts        # Entry: Hono + Socket.IO + HTTP
+│   │       ├── config/env.ts   # Environment variables
+│   │       ├── routes/         # auth.ts, health.ts
+│   │       ├── middleware/     # auth.ts, error.ts
+│   │       └── ws/index.ts    # Socket.IO handlers
+│   └── web/                    # Next.js landing page SPA
+│       └── src/
+│           ├── app/            # App Router pages (6 pages)
+│           └── components/     # Navbar, Footer, ThemeToggle
+├── packages/
+│   ├── db/                     # Drizzle ORM schema + connection
+│   └── shared/                 # Shared types & constants
+├── slides/
+│   └── pitch.md               # PechaKucha pitch deck (6 slides)
+├── .claude/                    # Claude Code config, commands, docs
+├── CLAUDE.md                   # Project conventions for Claude Code
+├── docker-compose.yml          # Full stack orchestration
+└── package.json                # Root workspace config
 ```
 
-Keep this Quickstart working — it's how a new teammate onboards in 2 minutes.
+## Getting Started
 
-## Stack
+### Prerequisites
 
-<!-- Languages, frameworks, hosting/deploy target, AI/LLM provider. -->
+- Node.js 22+
+- Docker & Docker Compose
+- npm 10+
 
-## Project structure
+### Quick Start (Docker)
 
-| Path | What |
-|---|---|
-| `src/` (or `app/`) | application code |
-| `tests/` | tests |
-| `docs/` | ARCHITECTURE.md + decision records |
-| `.github/` | CI, security, PR/issue templates |
+```bash
+# Clone the repo
+git clone <repo-url>
+cd water-delivery
 
-## Team
+# Start all services
+docker compose up -d --build
+```
 
-<!-- Members + this week's roles (Anchor / Reviewer). Link your board. -->
+### Services
 
----
+| Service  | Host Port | URL                          | Description             |
+| -------- | --------- | ---------------------------- | ----------------------- |
+| Web      | 3003      | http://localhost:3003         | Next.js landing page    |
+| API      | 3002      | http://localhost:3002         | Hono REST API           |
+| Postgres | 5433      | localhost:5433               | PostgreSQL database     |
+| Redis    | 6380      | localhost:6380               | Redis cache             |
 
-## What's already set up for you
+> **Note:** Host ports are remapped to avoid conflicts with Cursor/OrbStack MCP servers running on default ports. Container ports remain standard (5432, 6379, 3001, 3000).
 
-This repo was created from the **Vibe Code Tours project starter**. It ships with:
+Browse the database with Drizzle Studio:
 
-| File | Gives you |
-|---|---|
-| `.github/workflows/ci.yml` | lint · typecheck · test · build on every PR (stays green until you add each script) |
-| `.github/workflows/security.yml` | gitleaks (leaked keys) + semgrep (SAST) — advisory, report-only |
-| `.github/dependabot.yml` | weekly PRs for vulnerable / outdated dependencies |
-| `.env.example` | secret hygiene — copy to `.env`, never commit real keys |
-| `.github/pull_request_template.md` · `ISSUE_TEMPLATE/` · `CODEOWNERS` | small reviewed PRs, one-owner issues |
-| `docs/ARCHITECTURE.md` · `docs/decisions/` | a 1-page overview + lightweight ADRs |
-| `working-agreement.md` | how your team works (GitHub Flow + rotating roles) |
+```bash
+npm run db:studio
+```
 
-**First thing to do:** follow [`SETUP.md`](./SETUP.md) — a ~1-hour checklist to turn it all on.
+### Local Development (without Docker)
 
-**Git rule:** branch → PR → 1 teammate review → merge. No push to `main`, no self-merge.
+```bash
+# Install dependencies
+npm install
 
-> A green pipeline ≠ secure. Scanners catch leaked keys, known-CVE deps, and injection
-> patterns. They do **not** catch prompt-injection, over-scoped tokens, or hallucinated
-> packages — a human still reviews for those.
+# Start only infrastructure
+docker compose up postgres redis -d
+
+# Start API
+npm run dev:api
+
+# Start Web
+npm run dev:web
+```
+
+## Available Scripts
+
+### Features
+
+- ✅ Responsive design (mobile-first)
+- ✅ Dark/light mode toggle with persisted preference
+- ✅ DaisyUI theme system
+- ✅ FOUC prevention (no flash on theme load)
+
+## Claude Code Integration
+
+### MCP Servers
+
+| MCP        | Purpose                          |
+| ---------- | -------------------------------- |
+| postgres   | Query and inspect database       |
+| github     | PRs, issues, repo management     |
+| playwright | Browser testing for landing page |
+
+### Domain Specialists
+
+- **Backend** — Hono + Socket.IO specialist
+- **Frontend** — Next.js + DaisyUI specialist
+- **Database** — PostgreSQL + Drizzle specialist
+
+## Roadmap
+
+### Frontend — Landing Page (SPA) ✅
+
+- [x] Home page with hero section and "Why Choose Us"
+- [x] Products page — 6 water products with details and pricing
+- [x] Subscription page — 3 plans (Basic, Standard, Premium)
+- [x] Pricing page — add-ons table and enterprise CTA
+- [x] About page — mission, stats, company values
+- [x] Contact page — contact form with client-side state
+- [x] Navbar — sticky header with mobile responsive dropdown
+- [x] Footer — 4-column layout with links
+- [x] DaisyUI theming (light + dark)
+- [x] Dark/light mode toggle with localStorage persistence
+- [x] Tailwind CSS v4 responsive design
+
+### Backend API 🔨
+
+- [ ] Product CRUD endpoints (list, get, create, update, delete)
+- [ ] Subscription plan endpoints
+- [ ] Order management (create, list, status updates)
+- [ ] Customer profile management
+- [ ] Driver assignment and tracking
+- [ ] Payment integration
+- [ ] Rate limiting and request validation
+- [ ] API documentation (OpenAPI/Swagger)
+- [ ] Email notification service
+- [ ] Admin dashboard endpoints
+
+### Mobile App (Flutter) 📋
+
+- [ ] Project setup with Flutter + Dart
+- [ ] Authentication screens (login, register, forgot password)
+- [ ] Home screen with product catalog
+- [ ] Product detail screen
+- [ ] Subscription plan selection
+- [ ] Order placement and tracking
+- [ ] User profile and order history
+- [ ] Push notifications
+- [ ] Payment integration
+- [ ] Driver app (route optimization, delivery confirmation)
+- [ ] Offline support and caching
+
+## License
+
+Private
