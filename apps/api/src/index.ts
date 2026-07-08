@@ -1,4 +1,4 @@
-import { createServer, type Server } from "node:http";
+import type { Server as HttpServer } from "node:http";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
@@ -24,19 +24,16 @@ app.route("/health", healthRoutes);
 
 app.onError(errorHandler);
 
-const httpServer = createServer(app.fetch);
+const httpServer = serve({
+  fetch: app.fetch,
+  port: env.API_PORT,
+});
 
-const io = new SocketIOServer(httpServer, {
+const io = new SocketIOServer(httpServer as HttpServer, {
   cors: { origin: env.API_CORS_ORIGIN, credentials: true },
 });
 
 setupSocketIO(io);
-
-serve({
-  fetch: app.fetch,
-  port: env.API_PORT,
-  createServer: () => httpServer,
-});
 
 console.log(`API server running on port ${env.API_PORT}`);
 console.log(`Socket.IO server ready`);

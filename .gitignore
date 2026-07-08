@@ -8,3 +8,4 @@ dist/
 coverage/
 .turbo/
 .volatile/
+.claude/settings.local.json
