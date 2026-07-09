@@ -38,10 +38,9 @@ jobs:
       - name: Validate Docker Compose
         run: docker compose config --quiet
 
-  docker:
-    needs: ci
+  docker-build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
         include:
