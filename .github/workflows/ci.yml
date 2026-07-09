@@ -49,7 +49,7 @@ jobs:
 
       - name: GHCR Login
         env:
-          DOCKER_PASSWORD: ${{ secrets.GHCR_PAT }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: docker login ghcr.io -u vibe-code-tours -p "$DOCKER_PASSWORD"
 
       - uses: docker/build-push-action@v6
