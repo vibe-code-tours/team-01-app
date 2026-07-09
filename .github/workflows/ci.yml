@@ -48,7 +48,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: GHCR Login
-        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u vibe-code-tours --password-stdin
+        env:
+          DOCKER_PASSWORD: ${{ secrets.GHCR_PAT }}
+        run: docker login ghcr.io -u vibe-code-tours -p "$DOCKER_PASSWORD"
 
       - uses: docker/build-push-action@v6
         with:
