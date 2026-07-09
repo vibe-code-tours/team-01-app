@@ -17,18 +17,13 @@ COPY . .
 EXPOSE 3001
 CMD ["npx", "tsx", "watch", "apps/api/src/index.ts"]
 
-FROM base AS api-build
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npx tsc -p apps/api/tsconfig.json --noEmit
-
 FROM node:22-alpine AS api-prod
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=api-build /app/apps/api ./apps/api
-COPY --from=api-build /app/packages/shared ./packages/shared
-COPY --from=api-build /app/packages/db ./packages/db
-COPY --from=api-build /app/package.json ./
+COPY apps/api ./apps/api
+COPY packages/shared ./packages/shared
+COPY packages/db ./packages/db
+COPY package.json ./
 EXPOSE 3001
 CMD ["node", "--import", "tsx", "apps/api/src/index.ts"]
 
