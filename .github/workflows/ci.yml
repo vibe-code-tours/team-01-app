@@ -12,6 +12,7 @@ concurrency:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   ci:
@@ -46,8 +47,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Docker Hub Login
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      - name: GHCR Login
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u vibe-code-tours --password-stdin
 
       - uses: docker/build-push-action@v6
         with:
@@ -55,7 +56,7 @@ jobs:
           file: Dockerfile
           target: api-prod
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/water-delivery-api:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/water-delivery-api:${{ github.sha }}
 
       - uses: docker/build-push-action@v6
         with:
@@ -63,4 +64,4 @@ jobs:
           file: Dockerfile
           target: web-prod
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/water-delivery-web:${{ github.sha }}
+          tags: ghcr.io/${{ github.repository_owner }}/water-delivery-web:${{ github.sha }}
