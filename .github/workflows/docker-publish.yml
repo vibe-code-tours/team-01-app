@@ -32,8 +32,8 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/api/Dockerfile
-          target: prod
+          file: Dockerfile
+          target: api-prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -60,8 +60,8 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/web/Dockerfile
-          target: prod
+          file: Dockerfile
+          target: web-prod
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
