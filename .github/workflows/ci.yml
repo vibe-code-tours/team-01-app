@@ -59,6 +59,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get short SHA
+        id: slug
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -66,7 +70,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/water-delivery-web
           tags: |
             type=ref,event=branch
-            type=sha,prefix=
+            type=sha,prefix=,format=short
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -80,7 +84,7 @@ jobs:
 
       - name: Export Image URL
         run: |
-          IMAGE_URL="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/water-delivery-web:${{ github.sha }}"
+          IMAGE_URL="${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/water-delivery-web:${{ steps.slug.outputs.sha }}"
           echo "### 🐳 Docker Image" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**${IMAGE_URL}**" >> $GITHUB_STEP_SUMMARY
