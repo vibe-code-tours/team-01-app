@@ -153,6 +153,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-version: "47.2.2"
           vercel-args: "${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --prebuilt"
 
       - name: Export deployment URL
