@@ -134,6 +134,7 @@ jobs:
           vercel-version: "latest"
           experimental-api: true
           target: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+          root-directory: apps/web
           vercel-build: true
           build-env: |
             NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
