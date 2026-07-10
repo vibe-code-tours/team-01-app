@@ -1,0 +1,123 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+      - feature/*
+  workflow_dispatch:
+
+env:
+  APP_NAME: water-delivery-system
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get version tag
+        id: version
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "tag=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pull Vercel environment (production)
+        run: npx vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: apps/web
+        if: github.ref == 'refs/heads/main'
+
+      - name: Pull Vercel environment (preview)
+        run: npx vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: apps/web
+        if: github.ref != 'refs/heads/main'
+
+      - name: Build for production
+        run: npx vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: apps/web
+        if: github.ref == 'refs/heads/main'
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+      - name: Build for preview
+        run: npx vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: apps/web
+        if: github.ref != 'refs/heads/main'
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          working-directory: apps/web
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --prebuilt --alias ${{ env.APP_NAME }}-${{ steps.version.outputs.tag }}"
+
+      - name: Export deployment URL
+        run: |
+          DEPLOY_URL="https://${{ env.APP_NAME }}-${{ steps.version.outputs.tag }}.vercel.app"
+          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $DEPLOY_URL"
+
+  docker-build:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/water-delivery-web
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: web-prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Print info
+        run: |
+          echo "Deployed URL: ${{ needs.deploy.outputs.url }}"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/water-delivery-web:${{ github.sha }}"
