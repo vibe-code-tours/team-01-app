@@ -18,7 +18,7 @@ env:
   APP_NAME: water-delivery-system
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}
-  TEAM_MEMBERS: "linletlettun2020"
+  TEAM_MEMBERS: "thatoe wythwin KhinSuSuChit linletlettun hanpainghtoo haymannko Wailynn351"
 
 jobs:
   ci:
