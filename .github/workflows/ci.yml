@@ -146,7 +146,7 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --prebuilt --alias ${{ env.APP_NAME }}-${{ steps.version.outputs.tag }}"
+          vercel-args: "${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --prebuilt"
 
       - name: Export deployment URL
         run: |
