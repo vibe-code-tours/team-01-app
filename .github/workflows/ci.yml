@@ -102,8 +102,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.email "linletlettun2020@gmail.com"
-          git config --global user.name "linletlettun2020"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
