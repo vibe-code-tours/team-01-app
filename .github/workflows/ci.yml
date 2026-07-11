@@ -129,17 +129,27 @@ jobs:
           fi
 
       - name: Deploy to Vercel (production)
+        id: deploy-prod
         if: github.ref == 'refs/heads/main'
-        run: vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          URL=$(vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $URL"
         working-directory: apps/web
 
       - name: Deploy to Vercel (preview)
+        id: deploy-preview
         if: github.ref != 'refs/heads/main'
-        run: vercel --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: |
+          URL=$(vercel --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $URL"
         working-directory: apps/web
 
       - name: Export deployment URL
         run: |
-          DEPLOY_URL="https://${{ env.APP_NAME }}-${{ steps.version.outputs.tag }}.vercel.app"
-          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
-          echo "Deployed to $DEPLOY_URL"
+          if [ -n "${{ steps.deploy-prod.outputs.url }}" ]; then
+            echo "url=${{ steps.deploy-prod.outputs.url }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=${{ steps.deploy-preview.outputs.url }}" >> "$GITHUB_OUTPUT"
+          fi
