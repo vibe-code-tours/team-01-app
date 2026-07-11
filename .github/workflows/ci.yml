@@ -154,10 +154,10 @@ jobs:
             echo "url=${{ steps.deploy-prod.outputs.url }}" >> "$GITHUB_OUTPUT"
             echo "### 🚀 Deployment" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Production:** ${{ steps.deploy-prod.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+            echo "[**${{ steps.deploy-prod.outputs.url }}**](${{ steps.deploy-prod.outputs.url }})" >> $GITHUB_STEP_SUMMARY
           else
             echo "url=${{ steps.deploy-preview.outputs.url }}" >> "$GITHUB_OUTPUT"
             echo "### 🚀 Deployment" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Preview:** ${{ steps.deploy-preview.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+            echo "[**${{ steps.deploy-preview.outputs.url }}**](${{ steps.deploy-preview.outputs.url }})" >> $GITHUB_STEP_SUMMARY
           fi
