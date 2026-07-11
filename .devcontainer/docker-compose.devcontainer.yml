@@ -1,0 +1,20 @@
+include:
+  - path: ../docker-compose.yml
+    service_filter: [postgres, redis]
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sleep infinity
+    environment:
+      - SHELL=/bin/zsh
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

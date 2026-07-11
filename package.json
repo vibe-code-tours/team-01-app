@@ -1,0 +1,31 @@
+{
+  "name": "water-delivery",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Water delivery system with landing page, API, and mobile app support",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "docker compose up --build",
+    "dev:api": "npm run dev --workspace=@water-delivery/api",
+    "dev:web": "npm run dev --workspace=@water-delivery/web",
+    "build": "npm run build --workspace=@water-delivery/shared && npm run build --workspace=@water-delivery/db && npm run build --workspace=@water-delivery/api && npm run build --workspace=@water-delivery/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "db:generate": "npm run db:generate --workspace=@water-delivery/db",
+    "db:migrate": "npm run db:migrate --workspace=@water-delivery/db",
+    "db:push": "npm run db:push --workspace=@water-delivery/db",
+    "db:studio": "npm run db:studio --workspace=@water-delivery/db",
+    "db:seed": "npm run db:seed --workspace=@water-delivery/db",
+    "db:reseed": "npm run db:reseed --workspace=@water-delivery/db"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}
