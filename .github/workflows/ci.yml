@@ -143,15 +143,12 @@ jobs:
         id: deploy-preview
         if: github.ref != 'refs/heads/main'
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
           vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system 2>&1 | tee /tmp/vercel-output.txt
           URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
-          ALIAS="water-delivery-system-${SHORT_SHA}"
-          vercel alias set "$URL" "$ALIAS.vercel.app" --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops 2>&1 || true
-          echo "url=https://${ALIAS}.vercel.app" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "### 🚀 Preview Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[**https://${ALIAS}.vercel.app**](https://${ALIAS}.vercel.app)" >> $GITHUB_STEP_SUMMARY
+          echo "[**$URL**]($URL)" >> $GITHUB_STEP_SUMMARY
 
       - name: Export deployment URL
         run: |
