@@ -136,7 +136,6 @@ jobs:
           URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Deployed to $URL"
-        working-directory: apps/web
 
       - name: Deploy to Vercel (preview)
         id: deploy-preview
@@ -146,7 +145,6 @@ jobs:
           URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Deployed to $URL"
-        working-directory: apps/web
 
       - name: Export deployment URL
         run: |
