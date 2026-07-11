@@ -36,8 +36,8 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
-      target: dev
+      dockerfile: Dockerfile
+      target: api-dev
     container_name: water-delivery-api
     environment:
       DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres}@postgres:5432/${DATABASE_NAME:-water_delivery}
@@ -64,8 +64,8 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
-      target: dev
+      dockerfile: Dockerfile
+      target: web-dev
     container_name: water-delivery-web
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
