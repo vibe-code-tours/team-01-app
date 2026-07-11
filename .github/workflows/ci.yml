@@ -133,25 +133,18 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system 2>&1 | tee /tmp/vercel-output.txt
-          DEPLOY_URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
-          ALIAS="water-delivery-system-prod"
-          vercel alias "$DEPLOY_URL" "$ALIAS" --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops
-          FINAL_URL="https://${ALIAS}.vercel.app"
-          echo "url=$FINAL_URL" >> "$GITHUB_OUTPUT"
-          echo "Deployed to $FINAL_URL"
+          URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $URL"
 
       - name: Deploy to Vercel (preview)
         id: deploy-preview
         if: github.ref != 'refs/heads/main'
         run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
           vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system 2>&1 | tee /tmp/vercel-output.txt
-          DEPLOY_URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
-          ALIAS="water-delivery-system-${SHORT_SHA}"
-          vercel alias "$DEPLOY_URL" "$ALIAS" --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops
-          FINAL_URL="https://${ALIAS}.vercel.app"
-          echo "url=$FINAL_URL" >> "$GITHUB_OUTPUT"
-          echo "Deployed to $FINAL_URL"
+          URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $URL"
 
       - name: Export deployment URL
         run: |
