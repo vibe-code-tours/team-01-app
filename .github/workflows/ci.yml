@@ -132,7 +132,7 @@ jobs:
         id: deploy-prod
         if: github.ref == 'refs/heads/main'
         run: |
-          URL=$(vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app')
+          URL=$(vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app' | head -1 | xargs)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Deployed to $URL"
         working-directory: apps/web
@@ -141,7 +141,7 @@ jobs:
         id: deploy-preview
         if: github.ref != 'refs/heads/main'
         run: |
-          URL=$(vercel --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app')
+          URL=$(vercel --yes --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | grep -oP 'https://[^\s]+\.vercel\.app' | head -1 | xargs)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Deployed to $URL"
         working-directory: apps/web
