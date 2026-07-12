@@ -53,7 +53,7 @@ routes.get("/stats", requireRole("super-admin", "admin"), async (c) => {
 });
 
 routes.get("/me", (c) => {
-  const currentUser = c.get("user");
+  const currentUser = c.get("user" as never);
   return c.json({ success: true, data: currentUser });
 });
 
@@ -101,7 +101,7 @@ routes.get("/users", requireRole("super-admin", "admin"), async (c) => {
 });
 
 routes.get("/users/:id", requireRole("super-admin", "admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const [found] = await db
     .select({
       id: user.id,
@@ -164,7 +164,7 @@ routes.post("/users", requireRole("super-admin"), async (c) => {
 });
 
 routes.patch("/users/:id", requireRole("super-admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const body = await c.req.json();
   const { name, role, status, phone } = body;
 
@@ -191,7 +191,7 @@ routes.patch("/users/:id", requireRole("super-admin"), async (c) => {
 });
 
 routes.delete("/users/:id", requireRole("super-admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
 
   const [existing] = await db.select().from(user).where(eq(user.id, id));
   if (!existing) {

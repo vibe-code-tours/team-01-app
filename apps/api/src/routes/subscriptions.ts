@@ -16,7 +16,7 @@ routes.get("/subscriptions", requireRole("super-admin", "admin"), async (c) => {
 
   const conditions = [];
   if (status) {
-    conditions.push(eq(subscriptions.status, status));
+    conditions.push(eq(subscriptions.status, status as "active" | "expired" | "cancelled"));
   }
   if (search) {
     conditions.push(sql`(${user.name} ILIKE ${`%${search}%`} OR ${user.email} ILIKE ${`%${search}%`})`);
@@ -62,7 +62,7 @@ routes.get("/subscriptions", requireRole("super-admin", "admin"), async (c) => {
 });
 
 routes.get("/subscriptions/:id", requireRole("super-admin", "admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
 
   const [found] = await db
     .select({

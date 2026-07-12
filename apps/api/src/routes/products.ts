@@ -20,10 +20,10 @@ routes.get("/products", requireRole("super-admin", "admin"), async (c) => {
     conditions.push(sql`(${products.name} ILIKE ${`%${search}%`} OR ${products.description} ILIKE ${`%${search}%`})`);
   }
   if (type) {
-    conditions.push(eq(products.type, type));
+    conditions.push(eq(products.type, type as "retail" | "pump" | "bottle"));
   }
   if (status) {
-    conditions.push(eq(products.status, status));
+    conditions.push(eq(products.status, status as "active" | "inactive"));
   }
 
   const where = conditions.length > 0 ? sql.join(conditions, sql` AND `) : undefined;
@@ -47,7 +47,7 @@ routes.get("/products", requireRole("super-admin", "admin"), async (c) => {
 });
 
 routes.get("/products/:id", requireRole("super-admin", "admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const [found] = await db.select().from(products).where(eq(products.id, id));
 
   if (!found) {
@@ -82,7 +82,7 @@ routes.post("/products", requireRole("super-admin"), async (c) => {
 });
 
 routes.patch("/products/:id", requireRole("super-admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const body = await c.req.json();
 
   const [existing] = await db.select().from(products).where(eq(products.id, id));
@@ -111,7 +111,7 @@ routes.patch("/products/:id", requireRole("super-admin"), async (c) => {
 });
 
 routes.delete("/products/:id", requireRole("super-admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
 
   const [existing] = await db.select().from(products).where(eq(products.id, id));
   if (!existing) {

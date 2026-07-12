@@ -17,10 +17,10 @@ routes.get("/orders", requireRole("super-admin", "admin"), async (c) => {
 
   const conditions = [];
   if (status) {
-    conditions.push(eq(orders.status, status));
+    conditions.push(eq(orders.status, status as "pending" | "paid" | "approved" | "rejected" | "scheduled" | "assigned" | "delivered" | "cancelled"));
   }
   if (type) {
-    conditions.push(eq(orders.orderType, type));
+    conditions.push(eq(orders.orderType, type as "retail" | "subscription"));
   }
   if (search) {
     conditions.push(sql`(${user.name} ILIKE ${`%${search}%`} OR ${orders.id} ILIKE ${`%${search}%`})`);
@@ -59,7 +59,7 @@ routes.get("/orders", requireRole("super-admin", "admin"), async (c) => {
 });
 
 routes.get("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
 
   const [order] = await db
     .select({
@@ -102,7 +102,7 @@ routes.get("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
 });
 
 routes.patch("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const body = await c.req.json();
   const { status, adminNotes } = body;
 

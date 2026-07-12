@@ -30,7 +30,7 @@ export default function AdminLayout({
         return;
       }
 
-      setUser(userData);
+      setUser({ name: userData.name, email: userData.email, role: userData.role || "" });
       setAuthorized(true);
     }
     checkAuth();
