@@ -56,8 +56,8 @@ const products = [
 
 const features = [
   {
-    title: "Same-Day Delivery",
-    desc: "Order before 2 PM and get your water delivered the same day. Fast and reliable.",
+    title: "Scheduled Delivery",
+    desc: "Choose your preferred delivery date and time. We deliver on your schedule.",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -140,8 +140,8 @@ const features = [
     ),
   },
   {
-    title: "Secure Payments",
-    desc: "Pay online or cash on delivery. Your payment information is always encrypted and secure.",
+    title: "Flexible Payments",
+    desc: "Pay via bank transfer (verified within 2-3 business days) or cash on delivery.",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -388,7 +388,7 @@ export default function HomePage() {
           </p>
           <ul className="mt-6 space-y-3 inline-block text-left">
             {[
-              "Same-day delivery",
+              "Scheduled delivery",
               "Priority scheduling",
               "Free dispenser loan",
               "Cancel anytime",

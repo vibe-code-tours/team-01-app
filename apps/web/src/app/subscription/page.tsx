@@ -43,7 +43,7 @@ const plans = [
       { text: "2 deliveries per month", included: true },
       { text: "19L per delivery", included: true },
       { text: "Free dispenser loan", included: true },
-      { text: "Priority delivery", included: false },
+      { text: "Priority scheduling", included: false },
       { text: "Dedicated support", included: false },
     ],
   },
@@ -56,7 +56,7 @@ const plans = [
       { text: "4 deliveries per month", included: true },
       { text: "19L per delivery", included: true },
       { text: "Free dispenser loan", included: true },
-      { text: "Priority delivery", included: true },
+      { text: "Priority scheduling", included: true },
       { text: "Dedicated support", included: false },
     ],
   },
@@ -68,7 +68,7 @@ const plans = [
       { text: "8 deliveries per month", included: true },
       { text: "19L per delivery", included: true },
       { text: "Free dispenser loan", included: true },
-      { text: "Priority delivery", included: true },
+      { text: "Priority scheduling", included: true },
       { text: "Dedicated support", included: true },
     ],
   },
@@ -193,7 +193,7 @@ export default function SubscriptionPage() {
               </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  "Same-day delivery",
+                  "Scheduled delivery",
                   "Priority scheduling",
                   "Free dispenser loan",
                   "Cancel anytime",
