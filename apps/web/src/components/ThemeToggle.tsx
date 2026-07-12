@@ -2,25 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-export function ThemeToggle() {
+export function ThemeToggle({ scrolled = false }: { scrolled?: boolean }) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "light" | "dark" | null;
     const initial = saved ?? "light";
     setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial);
+    document.documentElement.setAttribute("data-theme", initial === "dark" ? "dark" : "water");
   }, []);
 
   const toggle = () => {
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.setAttribute("data-theme", next === "dark" ? "dark" : "water");
     localStorage.setItem("theme", next);
   };
 
   return (
-    <label className="swap swap-rotate btn btn-ghost btn-circle btn-sm">
+    <label className={`swap swap-rotate btn btn-circle btn-sm transition-colors duration-200 ${scrolled ? "btn-ghost text-white hover:bg-white/10" : "btn-ghost"}`}>
       <input
         type="checkbox"
         checked={theme === "dark"}
