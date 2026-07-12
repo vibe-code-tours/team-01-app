@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./src/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "postgresql://postgres:postgres@host.docker.internal:5433/water_delivery",
+    url: process.env.DATABASE_URL || "postgresql://postgres:postgres@postgres:5432/water_delivery",
   },
 });
