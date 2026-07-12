@@ -1,4 +1,4 @@
-export type Role = "user" | "admin" | "delivery";
+export type Role = "user" | "admin" | "delivery" | "super-admin";
 
 export interface RegisterRequest {
   email: string;
