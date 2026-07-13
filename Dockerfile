@@ -15,6 +15,8 @@ FROM base AS api-dev
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 EXPOSE 3001
+RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
+USER nonroot
 CMD ["npx", "tsx", "watch", "apps/api/src/index.ts"]
 
 FROM node:22-alpine AS api-prod
@@ -25,6 +27,8 @@ COPY packages/shared ./packages/shared
 COPY packages/db ./packages/db
 COPY package.json ./
 EXPOSE 3001
+RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
+USER nonroot
 CMD ["node", "--import", "tsx", "apps/api/src/index.ts"]
 
 # ── Web ───────────────────────────────────────────────
@@ -33,6 +37,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 WORKDIR /app/apps/web
 EXPOSE 3000
+RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
+USER nonroot
 CMD ["npx", "next", "dev", "--port", "3000"]
 
 FROM base AS web-build
@@ -52,4 +58,6 @@ COPY --from=web-build /app/packages/shared ./packages/shared
 COPY --from=web-build /app/package.json ./
 WORKDIR /app/apps/web
 EXPOSE 3000
+RUN addgroup -S nonroot && adduser -S nonroot -G nonroot
+USER nonroot
 CMD ["node", "node_modules/.bin/next", "start", "-p", "3000"]

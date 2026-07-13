@@ -15,6 +15,8 @@ updates:
       # One grouped PR for minor/patch bumps — less noise for beginners.
       minor-and-patch:
         update-types: ["minor", "patch"]
+    cooldown:
+      default-days: 7
 
   # Python / pip — active only if requirements.txt / pyproject.toml exists.
   - package-ecosystem: "pip"
@@ -24,6 +26,8 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: "chore(deps)"
+    cooldown:
+      default-days: 7
 
   # GitHub Actions themselves — keeps pinned action versions patched.
   - package-ecosystem: "github-actions"
@@ -32,3 +36,5 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "chore(ci)"
+    cooldown:
+      default-days: 7

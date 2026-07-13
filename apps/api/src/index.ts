@@ -14,6 +14,13 @@ import { auth } from "./lib/auth.js";
 import { errorHandler } from "./middleware/error.js";
 import { setupSocketIO } from "./ws/index.js";
 
+// Validate required environment variables in production
+if (env.NODE_ENV === "production") {
+  if (!env.BETTER_AUTH_SECRET) {
+    throw new Error("BETTER_AUTH_SECRET environment variable is required in production");
+  }
+}
+
 const app = new Hono();
 
 app.use("*", logger());
