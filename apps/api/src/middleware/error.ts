@@ -1,7 +1,8 @@
 import type { Context } from "hono";
 
 export const errorHandler = (err: Error, c: Context) => {
-  console.error(`[Error] ${err.message}`, err.stack);
+  const isDev = process.env.NODE_ENV !== "production";
+  console.error(`[Error] ${err.message}${isDev ? `\n${err.stack}` : ""}`);
 
   if (err.name === "UnauthorizedError" || err.message === "Unauthorized") {
     return c.json({ success: false, error: "Unauthorized" }, 401);
