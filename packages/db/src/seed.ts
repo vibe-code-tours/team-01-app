@@ -1,11 +1,32 @@
-import { count, sql } from "drizzle-orm";
+import { randomBytes, scrypt } from "node:crypto";
+import { count, eq, sql } from "drizzle-orm";
 import { closeDb, db } from "./db.js";
+import { user, account } from "./schema/auth.js";
 import { products, provinces, subscriptionPackages, townships } from "./schema/index.js";
 
-const SEED_TABLES = ["townships", "provinces", "subscription_packages", "products"] as const;
+const SEED_TABLES = ["account", "user", "townships", "provinces", "subscription_packages", "products"] as const;
+
+const SUPER_ADMIN = {
+  email: "admin@waterdelivery.com",
+  name: "Super Admin",
+  password: "Water@Delivery1",
+  role: "super-admin",
+  status: "active",
+};
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16).toString("hex");
+  const key = await new Promise<Buffer>((resolve, reject) => {
+    scrypt(password.normalize("NFKC"), salt, 64, { N: 16384, r: 16, p: 1, maxmem: 128 * 16384 * 16 * 2 }, (err, key) => {
+      if (err) reject(err);
+      else resolve(key);
+    });
+  });
+  return `${salt}:${key.toString("hex")}`;
+}
 
 async function clearSeedData(): Promise<void> {
-  await db.execute(sql.raw(`TRUNCATE ${SEED_TABLES.join(", ")} RESTART IDENTITY`));
+  await db.execute(sql.raw(`TRUNCATE ${SEED_TABLES.map((t) => (t === "user" ? `"${t}"` : t)).join(", ")} CASCADE`));
   console.log("Cleared seed data");
 }
 
@@ -14,8 +35,40 @@ async function hasSeedData(): Promise<boolean> {
   return result.count > 0;
 }
 
+async function seedSuperAdmin(): Promise<void> {
+  const [existing] = await db.select().from(user).where(eq(user.email, SUPER_ADMIN.email));
+  if (existing) {
+    console.log("Super-admin already exists, skipping");
+    return;
+  }
+
+  const userId = crypto.randomUUID();
+  const passwordHash = await hashPassword(SUPER_ADMIN.password);
+
+  await db.insert(user).values({
+    id: userId,
+    email: SUPER_ADMIN.email,
+    name: SUPER_ADMIN.name,
+    role: SUPER_ADMIN.role,
+    status: SUPER_ADMIN.status,
+    emailVerified: true,
+  });
+
+  await db.insert(account).values({
+    id: crypto.randomUUID(),
+    accountId: SUPER_ADMIN.email,
+    providerId: "credential",
+    userId,
+    password: passwordHash,
+  });
+
+  console.log(`Seeded super-admin: ${SUPER_ADMIN.email}`);
+}
+
 async function runSeed(): Promise<void> {
   console.log("Seeding database...");
+
+  await seedSuperAdmin();
 
   const productData = [
     {

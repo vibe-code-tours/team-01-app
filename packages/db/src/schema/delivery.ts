@@ -1,11 +1,11 @@
-import { pgTable, uuid, varchar, pgEnum, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, varchar, pgEnum, timestamp } from "drizzle-orm/pg-core";
 
 export const deliveryPersonStatusEnum = pgEnum("delivery_person_status", ["active", "inactive"]);
 export const assignmentStatusEnum = pgEnum("assignment_status", ["pending", "in_transit", "delivered"]);
 
 export const deliveryPersons = pgTable("delivery_persons", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").notNull(),
+  userId: text("user_id").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 20 }).notNull(),
   provinceId: uuid("province_id").notNull(),

@@ -6,6 +6,10 @@ import { logger } from "hono/logger";
 import { Server as SocketIOServer } from "socket.io";
 import env from "./config/env.js";
 import { healthRoutes } from "./routes/health.js";
+import { adminRoutes } from "./routes/admin.js";
+import { productRoutes } from "./routes/products.js";
+import { orderRoutes } from "./routes/orders.js";
+import { subscriptionRoutes } from "./routes/subscriptions.js";
 import { auth } from "./lib/auth.js";
 import { errorHandler } from "./middleware/error.js";
 import { setupSocketIO } from "./ws/index.js";
@@ -21,6 +25,10 @@ app.on(["POST", "GET"], "/api/auth/**", (c) => {
 });
 
 app.route("/health", healthRoutes);
+app.route("/api/admin", adminRoutes);
+app.route("/api/admin", productRoutes);
+app.route("/api/admin", orderRoutes);
+app.route("/api/admin", subscriptionRoutes);
 
 app.onError(errorHandler);
 

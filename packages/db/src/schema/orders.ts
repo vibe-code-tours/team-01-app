@@ -1,5 +1,6 @@
 import { pgTable, uuid, varchar, text, decimal, pgEnum, timestamp } from "drizzle-orm/pg-core";
 
+
 export const orderTypeEnum = pgEnum("order_type", ["retail", "subscription"]);
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
@@ -14,7 +15,7 @@ export const orderStatusEnum = pgEnum("order_status", [
 
 export const orders = pgTable("orders", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").notNull(),
+  userId: text("user_id").notNull(),
   orderType: orderTypeEnum("order_type").notNull(),
   totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
   status: orderStatusEnum("status").default("pending").notNull(),

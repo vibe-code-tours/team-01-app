@@ -1,4 +1,166 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap');
+
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
+  themes: water --default, dark --prefersdark;
+  base: true;
+  styled: true;
+  utils: true;
+  prefix: "";
+  logs: false;
+}
+
+@theme {
+  --color-water-primary: #1E6091;
+  --color-water-primary-dark: #154B6F;
+  --color-water-secondary: #0891B2;
+  --color-water-accent: #0E7490;
+  --color-water-surface: #EFF8FF;
+  --color-water-surface-dark: #DBEAFE;
+  --color-water-border: #BFDBFE;
+}
+
+/* DaisyUI ocean theme */
+:root[data-theme="water"] {
+  --p: 205 70% 35%;
+  --pf: 205 70% 25%;
+  --pc: 0 0% 100%;
+  --s: 187 72% 37%;
+  --sf: 187 72% 27%;
+  --sc: 0 0% 100%;
+  --a: 187 68% 32%;
+  --af: 187 68% 22%;
+  --ac: 0 0% 100%;
+  --n: 210 40% 96%;
+  --nf: 210 40% 92%;
+  --nc: 215 25% 15%;
+  --b1: 210 100% 98%;
+  --b2: 210 100% 96%;
+  --b3: 210 100% 93%;
+  --bc: 215 25% 15%;
+  --in: 198 93% 60%;
+  --inc: 198 100% 12%;
+  --su: 160 60% 45%;
+  --suc: 160 100% 10%;
+  --wa: 38 92% 50%;
+  --wac: 38 100% 10%;
+  --er: 0 72% 51%;
+  --erc: 0 100% 14%;
+}
+
+/* Button color overrides */
+.btn-primary {
+  background-color: #1E6091 !important;
+  color: #ffffff !important;
+  border: none;
+  box-shadow: 0 2px 8px -2px rgba(30, 96, 145, 0.3);
+}
+.btn-primary:hover {
+  background-color: #154B6F !important;
+  box-shadow: 0 4px 12px -2px rgba(30, 96, 145, 0.4);
+}
+.btn-secondary {
+  border: none;
+  box-shadow: 0 2px 8px -2px rgba(8, 145, 178, 0.3);
+}
+.btn-outline {
+  border: 1.5px solid #1E6091;
+  color: #1E6091;
+  background: transparent;
+}
+.btn-outline:hover {
+  background-color: #1E6091 !important;
+  color: #ffffff !important;
+  border-color: #1E6091;
+}
+.btn-ghost {
+  border: none;
+  background: transparent;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out both;
+}
+
+/* Staggered animations for grid children */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+
+/* Card hover lift effect */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(30, 96, 145, 0.12), 0 8px 10px -6px rgba(30, 96, 145, 0.06);
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(var(--bc) / 0.2);
+  border-radius: 3px;
+}
+
+/* Focus visible for keyboard nav */
+:focus-visible {
+  outline: 2px solid oklch(var(--p));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

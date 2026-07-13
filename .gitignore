@@ -10,4 +10,7 @@ dist/
 coverage/
 .turbo/
 .volatile/
-.claude/settings.local.json
+.claude/
+!.claude/settings.json
+.playwright-mcp/
+*.png

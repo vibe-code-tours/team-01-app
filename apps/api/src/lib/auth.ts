@@ -2,13 +2,17 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "@better-auth/passkey";
 import { twoFactor } from "better-auth/plugins";
-import { db, users } from "@water-delivery/db";
+import { db, user, account, session, verification } from "@water-delivery/db";
 
 export const auth = betterAuth({
+  trustedOrigins: [process.env.API_CORS_ORIGIN || "http://localhost:3005"],
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
-      user: users,
+      user,
+      account,
+      session,
+      verification,
     },
   }),
   user: {
@@ -43,6 +47,12 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+  },
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: false,
+    },
   },
   plugins: [
     passkey({

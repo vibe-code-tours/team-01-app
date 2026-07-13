@@ -1,10 +1,10 @@
-import { pgTable, uuid, integer, pgEnum, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, integer, pgEnum, timestamp } from "drizzle-orm/pg-core";
 
 export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "expired", "cancelled"]);
 
 export const subscriptions = pgTable("subscriptions", {
   id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").notNull(),
+  userId: text("user_id").notNull(),
   packageId: uuid("package_id").notNull(),
   couponsRemaining: integer("coupons_remaining").notNull(),
   status: subscriptionStatusEnum("status").default("active").notNull(),
