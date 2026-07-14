@@ -22,12 +22,21 @@ export default function EditProductPage() {
   const id = params.id as string;
 
   const [product, setProduct] = useState<Product | null>(null);
-  const [form, setForm] = useState({ name: "", description: "", price: "", type: "retail", packSize: "", imageUrl: "", status: "active" });
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    type: "retail",
+    packSize: "",
+    imageUrl: "",
+    status: "active",
+  });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageSuccess, setMessageSuccess] = useState(false);
 
   function getImageSrc(url: string | null): string {
     if (!url) return "";
@@ -97,7 +106,7 @@ export default function EditProductPage() {
 
     if (result.success) {
       setMessage("Product updated successfully");
-      // Re-fetch product to get updated imageUrl
+      setMessageSuccess(true);
       const refreshed = await adminFetch<Product>(`/products/${id}`);
       if (refreshed.success && refreshed.data) {
         const p = refreshed.data;
@@ -114,90 +123,208 @@ export default function EditProductPage() {
       }
     } else {
       setMessage(result.error || "Failed to update product");
+      setMessageSuccess(false);
     }
   }
 
   if (loading) {
-    return <div className="flex justify-center py-8"><span className="loading loading-spinner loading-lg"></span></div>;
+    return (
+      <div className="flex justify-center py-12">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
   }
 
   if (!product) {
-    return <div className="text-center py-8">Product not found</div>;
+    return (
+      <div className="text-center py-16">
+        <p className="text-sm text-gray-500">Product not found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-lg">
-      <div className="flex items-center gap-4 mb-6">
-        <button className="btn btn-ghost btn-sm" onClick={() => router.back()}>&larr; Back</button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+    <div className="max-w-lg animate-fade-in">
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+          onClick={() => router.back()}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Created{" "}
+            {new Date(product.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="card-body">
-          <div className="text-sm text-base-content/60 mb-4">
-            Created {new Date(product.createdAt).toLocaleDateString()}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        {message && (
+          <div
+            className={`px-4 py-3 rounded-xl text-sm font-medium mb-5 ${messageSuccess ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}
+          >
+            {message}
           </div>
+        )}
 
-          {message && (
-            <div className={`alert ${message.includes("success") ? "alert-success" : "alert-error"} mb-4`}>
-              <span>{message}</span>
+        <form onSubmit={handleSave}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
             </div>
-          )}
-
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Name <span className="text-red-500">*</span></label>
-                <input type="text" className="input input-bordered w-full" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Price (MMK) <span className="text-red-500">*</span></label>
-                <input type="number" className="input input-bordered w-full" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required min="0" step="0.01" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
-                <select className="select select-bordered w-full" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                  <option value="retail">Retail</option>
-                  <option value="pump">Pump</option>
-                  <option value="bottle">Bottle</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Pack Size</label>
-                <input type="text" className="input input-bordered w-full" value={form.packSize} onChange={(e) => setForm({ ...form, packSize: e.target.value })} placeholder="e.g. 500ml, 1L" />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Product Image</label>
-                {(imagePreview || form.imageUrl) ? (
-                  <div className="relative">
-                    <img src={imagePreview || getImageSrc(form.imageUrl)} alt="Product" className="w-full h-40 object-cover rounded-lg border border-gray-200" />
-                    <button type="button" className="btn btn-xs btn-error absolute top-2 right-2" onClick={removeImage}>Remove</button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary transition-colors">
-                    <span className="text-sm text-gray-500">Click to upload image</span>
-                    <span className="text-xs text-gray-400 mt-1">JPEG, PNG, WebP, GIF (max 5MB)</span>
-                    <input type="file" className="hidden" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageSelect} />
-                  </label>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                <select className="select select-bordered w-full" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                <textarea className="textarea textarea-bordered w-full" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Enter product description" />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Price (MMK) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                required
+                min="0"
+                step="0.01"
+              />
             </div>
-            <button type="submit" className={`btn btn-primary w-full ${saving ? "loading" : ""}`} disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </form>
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Type
+              </label>
+              <select
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
+              >
+                <option value="retail">Retail</option>
+                <option value="pump">Pump</option>
+                <option value="bottle">Bottle</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Pack Size
+              </label>
+              <input
+                type="text"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                value={form.packSize}
+                onChange={(e) => setForm({ ...form, packSize: e.target.value })}
+                placeholder="e.g. 500ml, 1L"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Product Image
+              </label>
+              {imagePreview || form.imageUrl ? (
+                <div className="relative">
+                  <img
+                    src={imagePreview || getImageSrc(form.imageUrl)}
+                    alt="Product"
+                    className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600"
+                    onClick={removeImage}
+                  >
+                    &times;
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-primary/40 transition-colors">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6 text-gray-300 mb-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span className="text-xs text-gray-400">Click to upload</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleImageSelect}
+                  />
+                </label>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Status
+              </label>
+              <select
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Description
+              </label>
+              <textarea
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                rows={3}
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                placeholder="Enter product description"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            className={`btn btn-primary w-full ${saving ? "loading" : ""}`}
+            disabled={saving}
+          >
+            {saving && (
+              <span className="loading loading-spinner loading-sm"></span>
+            )}
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
       </div>
     </div>
   );
