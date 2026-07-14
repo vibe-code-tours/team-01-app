@@ -2,6 +2,12 @@ import { Hono } from "hono";
 import { eq, desc, count, sql } from "drizzle-orm";
 import { db, products } from "@water-delivery/db";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
+import Busboy from "busboy";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as crypto from "node:crypto";
+import { Readable } from "node:stream";
+import sharp from "sharp";
 
 const routes = new Hono();
 
@@ -108,6 +114,89 @@ routes.patch("/products/:id", requireRole("super-admin"), async (c) => {
   const [updated] = await db.update(products).set(updates).where(eq(products.id, id)).returning();
 
   return c.json({ success: true, data: updated });
+});
+
+const UPLOAD_DIR = path.join(process.cwd(), "apps/api/uploads/products");
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_SIZE = 5 * 1024 * 1024;
+
+routes.post("/products/:id/image", requireRole("super-admin"), async (c) => {
+  const id = c.req.param("id") as string;
+
+  const [existing] = await db.select().from(products).where(eq(products.id, id));
+  if (!existing) {
+    return c.json({ success: false, error: "Product not found" }, 404);
+  }
+
+  const contentType = c.req.header("content-type") || "";
+  if (!contentType.includes("multipart/form-data")) {
+    return c.json({ success: false, error: "Expected multipart/form-data" }, 400);
+  }
+
+  // Collect full body buffer first, then process with busboy
+  const buffer = Buffer.from(await c.req.arrayBuffer());
+
+  let savedFilename = "";
+  let fileBuffer: Buffer | null = null;
+  let errorMsg = "";
+
+  await new Promise<void>((resolve) => {
+    const busboy = Busboy({ headers: { "content-type": contentType }, limits: { fileSize: MAX_SIZE, files: 1 } });
+
+    busboy.on("file", (fieldname, stream, info) => {
+      const ext = path.extname(info.filename || "").toLowerCase() || ".jpg";
+      const mime = info.mimeType;
+
+      if (!ALLOWED_TYPES.includes(mime)) {
+        stream.resume();
+        errorMsg = "Invalid file type. Allowed: JPEG, PNG, WebP, GIF";
+        resolve();
+        return;
+      }
+
+      savedFilename = `${crypto.randomUUID()}${ext}`;
+      const chunks: Buffer[] = [];
+
+      stream.on("data", (chunk: Buffer) => chunks.push(chunk));
+      stream.on("limit", () => {
+        errorMsg = "File too large. Max 5MB";
+        resolve();
+      });
+      stream.on("end", () => {
+        fileBuffer = Buffer.concat(chunks);
+      });
+    });
+
+    busboy.on("finish", () => resolve());
+    busboy.on("error", () => { errorMsg = "Upload failed"; resolve(); });
+
+    Readable.from(buffer).pipe(busboy);
+  });
+
+  if (errorMsg || !fileBuffer) {
+    return c.json({ success: false, error: errorMsg || "No file uploaded" }, 400);
+  }
+
+  if (existing.imageUrl && existing.imageUrl.startsWith("/uploads/")) {
+    const oldPath = path.join(process.cwd(), "apps/api", existing.imageUrl);
+    const thumbPath = oldPath.replace(/(\.\w+)$/, "_thumb$1");
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    if (fs.existsSync(thumbPath)) fs.unlinkSync(thumbPath);
+  }
+
+  // Resize image to max 800px width and create 200px thumbnail
+  const ext = path.extname(savedFilename);
+  const baseName = savedFilename.replace(ext, "");
+  const resizedPath = path.join(UPLOAD_DIR, savedFilename);
+  const thumbPath = path.join(UPLOAD_DIR, `${baseName}_thumb${ext}`);
+
+  await sharp(fileBuffer).resize({ width: 800, withoutEnlargement: true }).toFile(resizedPath);
+  await sharp(fileBuffer).resize({ width: 200, withoutEnlargement: true }).toFile(thumbPath);
+
+  const imageUrl = `/uploads/products/${savedFilename}`;
+  await db.update(products).set({ imageUrl, updatedAt: new Date() }).where(eq(products.id, id));
+
+  return c.json({ success: true, data: { imageUrl } }, 201);
 });
 
 routes.delete("/products/:id", requireRole("super-admin"), async (c) => {
