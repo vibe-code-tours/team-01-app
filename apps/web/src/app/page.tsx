@@ -432,7 +432,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-4 bg-gradient-to-r from-primary to-cyan-600 text-white">
+      <section className="py-20 px-4 bg-gradient-to-l from-primary to-cyan-600 text-white">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left */}
