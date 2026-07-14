@@ -15,6 +15,20 @@
       "when": 1783348835184,
       "tag": "0001_steep_psylocke",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1752493200000,
+      "tag": "0002_coupon_deliveries",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1752580000000,
+      "tag": "0003_merge_coupon_into_orders",
+      "breakpoints": true
     }
   ]
 }

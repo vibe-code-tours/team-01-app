@@ -8,6 +8,7 @@ export const subscriptionPackages = pgTable("subscription_packages", {
   couponCount: integer("coupon_count").notNull(),
   price: decimal("price", { precision: 12, scale: 2 }).notNull(),
   description: text("description"),
+  expiresInDays: integer("expires_in_days").default(30).notNull(),
   status: subscriptionPackageStatusEnum("status").default("active").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
