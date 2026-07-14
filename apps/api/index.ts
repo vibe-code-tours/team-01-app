@@ -1,27 +1,23 @@
-import type { Server as HttpServer } from "node:http";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { Hono } from "hono";
-import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { Server as SocketIOServer } from "socket.io";
-import env from "./config/env.js";
-import { healthRoutes } from "./routes/health.js";
-import { adminRoutes } from "./routes/admin.js";
-import { productRoutes } from "./routes/products.js";
-import { orderRoutes } from "./routes/orders.js";
-import { subscriptionRoutes } from "./routes/subscriptions.js";
-import { provinceRoutes } from "./routes/provinces.js";
-import { townshipRoutes } from "./routes/townships.js";
-import { scheduleRoutes } from "./routes/schedules.js";
-import { publicRoutes } from "./routes/public.js";
-import { userRoutes } from "./routes/user.js";
-import { userOrderRoutes } from "./routes/user-orders.js";
-import { userCouponDeliveryRoutes } from "./routes/user-coupon-deliveries.js";
-import { auth } from "./lib/auth.js";
-import { errorHandler } from "./middleware/error.js";
-import { setupSocketIO } from "./ws/index.js";
+import env from "./src/config/env.js";
+import { healthRoutes } from "./src/routes/health.js";
+import { adminRoutes } from "./src/routes/admin.js";
+import { productRoutes } from "./src/routes/products.js";
+import { orderRoutes } from "./src/routes/orders.js";
+import { subscriptionRoutes } from "./src/routes/subscriptions.js";
+import { provinceRoutes } from "./src/routes/provinces.js";
+import { townshipRoutes } from "./src/routes/townships.js";
+import { scheduleRoutes } from "./src/routes/schedules.js";
+import { publicRoutes } from "./src/routes/public.js";
+import { userRoutes } from "./src/routes/user.js";
+import { userOrderRoutes } from "./src/routes/user-orders.js";
+import { userCouponDeliveryRoutes } from "./src/routes/user-coupon-deliveries.js";
+import { auth } from "./src/lib/auth.js";
+import { errorHandler } from "./src/middleware/error.js";
 
 const app = new Hono();
 
@@ -51,7 +47,7 @@ app.get("/uploads/*", async (c) => {
   return c.body(fs.readFileSync(filePath));
 });
 
-// Serve uploads through /api prefix (via Next.js proxy)
+// Serve uploads through /api prefix
 app.get("/api/uploads/*", async (c) => {
   const reqPath = c.req.path.replace(/^\/api/, "");
   const filePath = path.join(process.cwd(), "apps/api", reqPath);
@@ -64,18 +60,6 @@ app.get("/api/uploads/*", async (c) => {
   return c.body(fs.readFileSync(filePath));
 });
 
-// Serve uploads for payments through /api prefix
-app.get("/api/uploads/payments/*", async (c) => {
-  const reqPath = c.req.path.replace(/^\/api/, "");
-  const filePath = path.join(process.cwd(), "apps/api", reqPath);
-  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
-    return c.notFound();
-  }
-  const ext = path.extname(filePath).toLowerCase();
-  c.header("Content-Type", MIME_TYPES[ext] || "application/octet-stream");
-  c.header("Cache-Control", "public, max-age=86400");
-  return c.body(fs.readFileSync(filePath));
-});
 app.route("/api/admin", adminRoutes);
 app.route("/api/admin", productRoutes);
 app.route("/api/admin", orderRoutes);
@@ -94,18 +78,5 @@ app.route("/api", userCouponDeliveryRoutes);
 
 app.onError(errorHandler);
 
-const httpServer = serve({
-  fetch: app.fetch,
-  port: env.API_PORT,
-});
-
-const io = new SocketIOServer(httpServer as HttpServer, {
-  cors: { origin: env.API_CORS_ORIGIN, credentials: true },
-});
-
-setupSocketIO(io);
-
-console.log(`API server running on port ${env.API_PORT}`);
-console.log(`Socket.IO server ready`);
-
-export { app, io };
+// Vercel serverless handler
+export default app;
