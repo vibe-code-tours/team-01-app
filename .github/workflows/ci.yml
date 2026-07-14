@@ -199,7 +199,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           cd apps/api
-          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system-api 2>&1 | tee /tmp/vercel-output.txt
+          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project api 2>&1 | tee /tmp/vercel-output.txt
           URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "### 🚀 API Production Deployment" >> $GITHUB_STEP_SUMMARY
@@ -211,7 +211,7 @@ jobs:
         if: github.ref != 'refs/heads/main'
         run: |
           cd apps/api
-          vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system-api 2>&1 | tee /tmp/vercel-output.txt
+          vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project api 2>&1 | tee /tmp/vercel-output.txt
           URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "### 🚀 API Preview Deployment" >> $GITHUB_STEP_SUMMARY
