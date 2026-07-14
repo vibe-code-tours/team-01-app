@@ -272,7 +272,7 @@ Delivery person uses same admin endpoints with role middleware:
 - View all orders with filters (status, date, user)
 - Approve/reject payment proofs
 - Assign orders to delivery persons (filtered by order's province)
-- Update order status ([pending → paid →] approved → scheduled → assigned → delivered)
+- Update order status (pending → paid → approved → scheduled → assigned → delivered)
 - View order history
 
 #### User Management
@@ -386,18 +386,25 @@ Delivery person uses same admin endpoints with role middleware:
 ```
 
 **Status Definitions:**
-- `pending` — Retail order placed, awaiting payment
-- `paid` — Payment proof uploaded, awaiting admin approval
+- `pending` — Order placed, awaiting user to upload payment proof and confirm
+- `paid` — User confirmed payment (uploaded proof + clicked "Confirm Payment"), awaiting admin approval
 - `approved` — Payment verified by admin (or subscription order using coupon)
-- `rejected` — Payment rejected (user can re-upload)
+- `rejected` — Payment rejected by admin (user can re-upload proof)
 - `scheduled` — Delivery date/time booked by user
 - `assigned` — Assigned to delivery person by admin
 - `delivered` — Delivery person marked as completed
 - `cancelled` — Order cancelled by user
 
+**User Flow (Retail Order):**
+1. User places order → status: `pending`
+2. User uploads payment proof → status stays `pending`
+3. User clicks "Confirm Payment" → status changes to `paid`
+4. Admin reviews and approves → status changes to `approved`
+5. User books delivery slot → status changes to `scheduled`
+
 **Note:** Subscription orders (coupon-based) start at `approved` since payment was already made when purchasing subscription.
 
-**Cancellation Policy:** User can cancel order anytime before `delivered` status. Once delivered, order cannot be cancelled.
+**Cancellation Policy:** User can cancel order while in `pending` status only. Once payment is confirmed (`paid`), order cannot be cancelled by user.
 
 ---
 
