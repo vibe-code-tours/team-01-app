@@ -90,7 +90,7 @@ jobs:
           echo "**${IMAGE_URL}**" >> $GITHUB_STEP_SUMMARY
 
   vercel-deploy:
-    needs: ci
+    needs: [ci, vercel-deploy-api]
     runs-on: ubuntu-latest
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
@@ -119,14 +119,12 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Get version tag
-        id: version
+      - name: Set API_URL env var from deployed API
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "tag=prod" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-          fi
+          API_URL="${{ needs.vercel-deploy-api.outputs.url }}"
+          echo "Setting API_URL=$API_URL in web app"
+          echo "$API_URL" | vercel env add API_URL production --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system
+          echo "$API_URL" | vercel env add API_URL preview --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system
 
       - name: Deploy to Vercel (production)
         id: deploy-prod
@@ -171,7 +169,7 @@ jobs:
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'workflow_dispatch' && (github.actor == 'thatoe' || github.actor == 'wythwin' || github.actor == 'KhinSuSuChit' || github.actor == 'linletlettun' || github.actor == 'hanpainghtoo' || github.actor == 'haymannko' || github.actor == 'Wailynn351'))
     outputs:
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${{ steps.export-url.outputs.url }}
 
     steps:
       - name: Checkout source
@@ -219,6 +217,7 @@ jobs:
           echo "[**$URL**]($URL)" >> $GITHUB_STEP_SUMMARY
 
       - name: Export API deployment URL
+        id: export-url
         run: |
           if [ -n "${{ steps.deploy-prod.outputs.url }}" ]; then
             echo "url=${{ steps.deploy-prod.outputs.url }}" >> "$GITHUB_OUTPUT"
