@@ -132,12 +132,11 @@ jobs:
         id: deploy-prod
         if: github.ref == 'refs/heads/main'
         run: |
-          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system 2>&1 | tee /tmp/vercel-output.txt
-          URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system
+          echo "url=https://water-delivery-system-prod.vercel.app" >> "$GITHUB_OUTPUT"
           echo "### 🚀 Production Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[**$URL**]($URL)" >> $GITHUB_STEP_SUMMARY
+          echo "[**https://water-delivery-system-prod.vercel.app**](https://water-delivery-system-prod.vercel.app)" >> $GITHUB_STEP_SUMMARY
 
       - name: Deploy to Vercel (preview)
         id: deploy-preview
@@ -149,17 +148,3 @@ jobs:
           echo "### 🚀 Preview Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "[**$URL**]($URL)" >> $GITHUB_STEP_SUMMARY
-
-      - name: Export deployment URL
-        run: |
-          if [ -n "${{ steps.deploy-prod.outputs.url }}" ]; then
-            echo "url=${{ steps.deploy-prod.outputs.url }}" >> "$GITHUB_OUTPUT"
-            echo "### 🚀 Deployment" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "[**${{ steps.deploy-prod.outputs.url }}**](${{ steps.deploy-prod.outputs.url }})" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "url=${{ steps.deploy-preview.outputs.url }}" >> "$GITHUB_OUTPUT"
-            echo "### 🚀 Deployment" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "[**${{ steps.deploy-preview.outputs.url }}**](${{ steps.deploy-preview.outputs.url }})" >> $GITHUB_STEP_SUMMARY
-          fi
