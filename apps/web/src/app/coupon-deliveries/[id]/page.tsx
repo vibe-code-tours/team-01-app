@@ -19,19 +19,45 @@ interface CouponDelivery {
   townshipName: string;
 }
 
-const statusColors: Record<string, string> = {
-  pending: "badge-warning",
-  assigned: "badge-info",
-  delivered: "badge-success",
-  cancelled: "badge-error",
+const statusConfig: Record<string, { bg: string; text: string; icon: string; label: string; description: string }> = {
+  pending: {
+    bg: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800",
+    text: "text-amber-700 dark:text-amber-400",
+    icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    label: "Pending",
+    description: "Waiting for a delivery person to be assigned.",
+  },
+  assigned: {
+    bg: "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800",
+    text: "text-violet-700 dark:text-violet-400",
+    icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+    label: "Assigned",
+    description: "A delivery person has been assigned to your order.",
+  },
+  delivered: {
+    bg: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800",
+    text: "text-emerald-700 dark:text-emerald-400",
+    icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+    label: "Delivered",
+    description: "Your water has been delivered successfully.",
+  },
+  cancelled: {
+    bg: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800",
+    text: "text-red-700 dark:text-red-400",
+    icon: "M6 18L18 6M6 6l12 12",
+    label: "Cancelled",
+    description: "This delivery has been cancelled.",
+  },
 };
 
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  assigned: "Assigned",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
+function formatDateFull(date: string) {
+  return new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function CouponDeliveryDetailPage() {
   const router = useRouter();
@@ -83,96 +109,159 @@ export default function CouponDeliveryDetailPage() {
   if (!delivery) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold">Delivery not found</h1>
+        <div className="w-16 h-16 rounded-2xl bg-base-200 flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <h1 className="text-xl font-bold mb-1">Delivery not found</h1>
+        <p className="text-sm text-base-content/50 mb-4">This delivery doesn&apos;t exist or has been removed.</p>
+        <button className="btn btn-primary btn-sm" onClick={() => router.push("/dashboard")}>
+          Back to Dashboard
+        </button>
       </div>
     );
   }
 
+  const status = statusConfig[delivery.status] || statusConfig.pending;
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <div className="flex items-center gap-4 mb-6">
-        <button className="btn btn-ghost btn-sm" onClick={() => router.back()}>&larr; Back</button>
-        <h1 className="text-2xl font-bold">Delivery Detail</h1>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Back + Title */}
+      <div className="flex items-center gap-3 mb-6 animate-fade-in">
+        <button
+          className="w-9 h-9 rounded-xl bg-base-200/80 hover:bg-base-200 flex items-center justify-center transition-colors cursor-pointer"
+          onClick={() => router.back()}
+          aria-label="Go back"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-base-content">Delivery Detail</h1>
+          <p className="text-xs text-base-content/50 font-mono">{delivery.id.slice(0, 8)}</p>
+        </div>
       </div>
 
+      {/* Toast message */}
       {message && (
-        <div className={`alert ${message.includes("success") || message.includes("returned") ? "alert-success" : "alert-error"} mb-6`}>
-          <span>{message}</span>
+        <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium animate-fade-in ${
+          message.includes("success") || message.includes("returned")
+            ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+            : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
+        }`}>
+          {message}
         </div>
       )}
 
-      {/* Delivery Info */}
-      <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <p className="text-sm text-base-content/50">Delivery ID</p>
-            <p className="font-mono text-sm">{delivery.id.slice(0, 8)}...</p>
-          </div>
-          <span className={`badge ${statusColors[delivery.status] || "badge-ghost"}`}>
-            {statusLabels[delivery.status] || delivery.status}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-base-content/50">Bottles</p>
-            <p className="font-medium">{delivery.bottleCount} x 20L</p>
+      {/* Status Banner */}
+      <div className={`${status.bg} border rounded-2xl p-5 mb-5 animate-fade-in-up`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl ${status.text} bg-white/80 dark:bg-black/20 flex items-center justify-center shrink-0`}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d={status.icon} />
+            </svg>
           </div>
           <div>
-            <p className="text-base-content/50">Coupons Used</p>
-            <p className="font-medium">{delivery.bottleCount} coupon{delivery.bottleCount > 1 ? "s" : ""}</p>
-          </div>
-          <div>
-            <p className="text-base-content/50">Scheduled Date</p>
-            <p className="font-medium">{delivery.scheduleDate}</p>
-          </div>
-          <div>
-            <p className="text-base-content/50">Time Slot</p>
-            <p className="font-medium">{delivery.scheduleTimeStart} — {delivery.scheduleTimeEnd}</p>
+            <h2 className={`font-semibold ${status.text}`}>{status.label}</h2>
+            <p className="text-sm text-base-content/60">{status.description}</p>
           </div>
         </div>
       </div>
 
-      {/* Delivery Details */}
-      <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6">
-        <h2 className="font-semibold mb-4">Delivery Information</h2>
-        <div className="space-y-3 text-sm">
-          <div>
-            <p className="text-base-content/50">Address</p>
-            <p className="font-medium">{delivery.deliveryAddress}</p>
+      {/* Schedule Card */}
+      <div className="bg-base-100 border border-base-200 rounded-2xl p-5 mb-4 animate-fade-in-up">
+        <div className="flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <h3 className="text-sm font-semibold text-base-content">Schedule</h3>
+        </div>
+        <div className="bg-base-200/50 rounded-xl p-4">
+          <p className="font-semibold text-base-content">{formatDateFull(delivery.scheduleDate)}</p>
+          <p className="text-sm text-primary font-medium mt-1">{delivery.scheduleTimeStart} — {delivery.scheduleTimeEnd}</p>
+        </div>
+      </div>
+
+      {/* Order Details */}
+      <div className="bg-base-100 border border-base-200 rounded-2xl p-5 mb-4 animate-fade-in-up">
+        <div className="flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <h3 className="text-sm font-semibold text-base-content">Order Details</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-base-200/50 rounded-xl p-3">
+            <p className="text-xs text-base-content/50 mb-0.5">Bottles</p>
+            <p className="font-semibold text-base-content">{delivery.bottleCount} x 20L</p>
           </div>
-          <div>
-            <p className="text-base-content/50">Township</p>
-            <p className="font-medium">{delivery.townshipName || "—"}</p>
+          <div className="bg-base-200/50 rounded-xl p-3">
+            <p className="text-xs text-base-content/50 mb-0.5">Coupons Used</p>
+            <p className="font-semibold text-base-content">{delivery.bottleCount}</p>
           </div>
-          <div>
-            <p className="text-base-content/50">Contact Phone</p>
-            <p className="font-medium">{delivery.contactPhone}</p>
+        </div>
+      </div>
+
+      {/* Delivery Address */}
+      <div className="bg-base-100 border border-base-200 rounded-2xl p-5 mb-4 animate-fade-in-up">
+        <div className="flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <h3 className="text-sm font-semibold text-base-content">Delivery Address</h3>
+        </div>
+        <div className="space-y-3">
+          <div className="bg-base-200/50 rounded-xl p-3">
+            <p className="text-sm text-base-content">{delivery.deliveryAddress}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-base-200/50 rounded-xl p-3">
+              <p className="text-xs text-base-content/50 mb-0.5">Township</p>
+              <p className="text-sm font-medium">{delivery.townshipName || "—"}</p>
+            </div>
+            <div className="bg-base-200/50 rounded-xl p-3">
+              <p className="text-xs text-base-content/50 mb-0.5">Phone</p>
+              <p className="text-sm font-medium">{delivery.contactPhone}</p>
+            </div>
           </div>
           {delivery.notes && (
-            <div>
-              <p className="text-base-content/50">Notes</p>
-              <p className="font-medium">{delivery.notes}</p>
+            <div className="bg-base-200/50 rounded-xl p-3">
+              <p className="text-xs text-base-content/50 mb-0.5">Notes</p>
+              <p className="text-sm font-medium">{delivery.notes}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Actions */}
-      <div className="space-y-4">
+      <div className="space-y-3 mt-6 animate-fade-in-up">
         {delivery.status === "pending" && (
           <button
-            className={`btn btn-outline btn-error w-full ${cancelling ? "loading" : ""}`}
+            className="btn btn-outline btn-error w-full"
             onClick={handleCancel}
             disabled={cancelling}
           >
+            {cancelling ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
             Cancel Delivery
           </button>
         )}
 
         {delivery.status !== "pending" && (
-          <a href="/dashboard" className="btn btn-outline w-full">
+          <button className="btn btn-outline w-full" onClick={() => router.push("/dashboard")}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
             Back to Dashboard
-          </a>
+          </button>
         )}
       </div>
     </div>

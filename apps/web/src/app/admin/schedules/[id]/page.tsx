@@ -36,6 +36,7 @@ export default function EditSchedulePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageSuccess, setMessageSuccess] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -83,8 +84,10 @@ export default function EditSchedulePage() {
     setSaving(false);
     if (result.success) {
       setMessage("Schedule updated successfully");
+      setMessageSuccess(true);
     } else {
       setMessage(result.error || "Failed to update schedule");
+      setMessageSuccess(false);
     }
   }
 
@@ -97,88 +100,89 @@ export default function EditSchedulePage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center py-8"><span className="loading loading-spinner loading-lg"></span></div>;
+    return <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>;
   }
 
   if (!schedule) {
-    return <div className="text-center py-8">Schedule not found</div>;
+    return <div className="text-center py-16"><p className="text-sm text-gray-500">Schedule not found</p></div>;
   }
 
   return (
-    <div className="max-w-lg">
-      <div className="flex items-center gap-4 mb-6">
-        <button className="btn btn-ghost btn-sm" onClick={() => router.back()}>&larr; Back</button>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Schedule</h1>
+    <div className="max-w-lg animate-fade-in">
+      <div className="flex items-center gap-3 mb-6">
+        <button className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors" onClick={() => router.back()}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Schedule</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{schedule.provinceName} &middot; Orders: {schedule.currentOrders}/{schedule.maxOrders}</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-        <div className="card-body">
-          <div className="text-sm text-gray-500 mb-4">
-            {schedule.provinceName} &middot; Orders: {schedule.currentOrders}/{schedule.maxOrders}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        {message && (
+          <div className={`px-4 py-3 rounded-xl text-sm font-medium mb-5 ${messageSuccess ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+            {message}
           </div>
+        )}
 
-          {message && (
-            <div className={`alert ${message.includes("success") ? "alert-success" : "alert-error"} mb-4`}>
-              <span>{message}</span>
+        <form onSubmit={handleSave}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Province</label>
+              <input type="text" className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-500" value={schedule.provinceName || ""} disabled />
             </div>
-          )}
-
-          <form onSubmit={handleSave}>
-            <div className="form-control mb-4">
-              <label className="label"><span className="label-text">Province</span></label>
-              <input type="text" className="input input-bordered w-full" value={schedule.provinceName || ""} disabled />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
+              <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
-            <div className="form-control mb-4">
-              <label className="label"><span className="label-text">Date</span></label>
-              <input type="date" className="input input-bordered w-full" value={date} onChange={(e) => setDate(e.target.value)} required />
-            </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="form-control">
-                <label className="label"><span className="label-text">Time Start</span></label>
-                <input type="time" className="input input-bordered w-full" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} required />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Time Start</label>
+                <input type="time" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} required />
               </div>
-              <div className="form-control">
-                <label className="label"><span className="label-text">Time End</span></label>
-                <input type="time" className="input input-bordered w-full" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} required />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Time End</label>
+                <input type="time" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} required />
               </div>
             </div>
-            <div className="form-control mb-4">
-              <label className="label"><span className="label-text">Max Orders</span></label>
-              <input type="number" className="input input-bordered w-full" value={maxOrders} onChange={(e) => setMaxOrders(e.target.value)} min="1" disabled={schedule.currentOrders > 0} required />
-              {schedule.currentOrders > 0 && <span className="text-xs text-gray-500 mt-1">Cannot change capacity with existing orders</span>}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Orders</label>
+              <input type="number" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:bg-gray-100" value={maxOrders} onChange={(e) => setMaxOrders(e.target.value)} min="1" disabled={schedule.currentOrders > 0} required />
+              {schedule.currentOrders > 0 && <p className="text-xs text-gray-400 mt-1">Cannot change capacity with existing orders</p>}
             </div>
-            <div className="form-control mb-4">
-              <label className="label"><span className="label-text">Type</span></label>
-              <select className="select select-bordered w-full" value={isProvinceWide ? "true" : "false"} onChange={(e) => setIsProvinceWide(e.target.value === "true")}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
+              <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" value={isProvinceWide ? "true" : "false"} onChange={(e) => setIsProvinceWide(e.target.value === "true")}>
                 <option value="true">Province Wide</option>
                 <option value="false">Specific Townships</option>
               </select>
             </div>
 
             {!isProvinceWide && (
-              <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Townships</span></label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Townships</label>
                 {townships.length === 0 ? (
-                  <p className="text-sm text-gray-500">No active townships.</p>
+                  <p className="text-sm text-gray-400">No active townships.</p>
                 ) : (
-                  <div className="border border-gray-200 rounded-lg p-3 max-h-48 overflow-y-auto">
-                    <button type="button" className="btn btn-ghost btn-xs mb-2" onClick={selectAllTownships}>Select All</button>
+                  <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto">
+                    <button type="button" className="text-xs font-medium text-primary hover:underline mb-2" onClick={selectAllTownships}>Select All</button>
                     {townships.map((t) => (
                       <label key={t.id} className="flex items-center gap-2 cursor-pointer py-1">
-                        <input type="checkbox" className="checkbox checkbox-sm" checked={townshipIds.includes(t.id)} onChange={() => toggleTownship(t.id)} />
-                        <span className="text-sm">{t.name}</span>
+                        <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={townshipIds.includes(t.id)} onChange={() => toggleTownship(t.id)} />
+                        <span className="text-sm text-gray-700">{t.name}</span>
                       </label>
                     ))}
                   </div>
                 )}
               </div>
             )}
-
-            <button type="submit" className="btn btn-primary w-full" disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </form>
-        </div>
+          </div>
+          <button type="submit" className="mt-6 btn btn-primary btn-sm" disabled={saving}>
+            {saving && <span className="loading loading-spinner loading-sm"></span>}
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </form>
       </div>
     </div>
   );

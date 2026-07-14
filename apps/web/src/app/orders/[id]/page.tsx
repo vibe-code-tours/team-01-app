@@ -25,26 +25,69 @@ interface Order {
   items: OrderItem[];
 }
 
-const statusColors: Record<string, string> = {
-  pending: "badge-warning",
-  paid: "badge-info",
-  approved: "badge-info",
-  scheduled: "badge-primary",
-  assigned: "badge-secondary",
-  delivered: "badge-success",
-  cancelled: "badge-error",
-  rejected: "badge-error",
+const statusConfig: Record<string, { bg: string; text: string; icon: string; label: string; description: string }> = {
+  pending: {
+    bg: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800",
+    text: "text-amber-700 dark:text-amber-400",
+    icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    label: "Pending Payment",
+    description: "Upload your payment proof to proceed.",
+  },
+  paid: {
+    bg: "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800",
+    text: "text-sky-700 dark:text-sky-400",
+    icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
+    label: "Awaiting Approval",
+    description: "Waiting for admin to approve your payment.",
+  },
+  approved: {
+    bg: "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800",
+    text: "text-sky-700 dark:text-sky-400",
+    icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+    label: "Approved",
+    description: "Your payment has been approved.",
+  },
+  scheduled: {
+    bg: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800",
+    text: "text-blue-700 dark:text-blue-400",
+    icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+    label: "Scheduled",
+    description: "Your delivery has been scheduled.",
+  },
+  assigned: {
+    bg: "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-800",
+    text: "text-violet-700 dark:text-violet-400",
+    icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+    label: "Out for Delivery",
+    description: "A delivery person is on the way.",
+  },
+  delivered: {
+    bg: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800",
+    text: "text-emerald-700 dark:text-emerald-400",
+    icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+    label: "Delivered",
+    description: "Your order has been delivered.",
+  },
+  cancelled: {
+    bg: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800",
+    text: "text-red-700 dark:text-red-400",
+    icon: "M6 18L18 6M6 6l12 12",
+    label: "Cancelled",
+    description: "This order has been cancelled.",
+  },
+  rejected: {
+    bg: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800",
+    text: "text-red-700 dark:text-red-400",
+    icon: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636",
+    label: "Rejected",
+    description: "Your payment was rejected. Please contact support.",
+  },
 };
 
-const statusLabels: Record<string, string> = {
-  pending: "Pending Payment",
-  paid: "Awaiting Approval",
-  approved: "Approved",
-  scheduled: "Scheduled",
-  assigned: "Assigned",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-  rejected: "Rejected",
+const orderTypeLabels: Record<string, string> = {
+  retail: "Retail",
+  subscription: "Subscription",
+  "coupon-delivery": "Coupon Delivery",
 };
 
 function formatPrice(price: string | number) {
@@ -97,7 +140,6 @@ export default function OrderDetailPage() {
     setUploading(false);
     if (result.success) {
       setMessage("Payment proof uploaded!");
-      // Refresh order
       const refreshed = await userFetch<Order>(`/orders/${id}`);
       if (refreshed.success && refreshed.data) setOrder(refreshed.data);
     } else {
@@ -151,62 +193,109 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold">Order not found</h1>
+        <div className="w-16 h-16 rounded-2xl bg-base-200 flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <h1 className="text-xl font-bold mb-1">Order not found</h1>
+        <p className="text-sm text-base-content/50 mb-4">This order doesn&apos;t exist or has been removed.</p>
+        <button className="btn btn-primary btn-sm" onClick={() => router.push("/dashboard")}>
+          Back to Dashboard
+        </button>
       </div>
     );
   }
 
+  const status = statusConfig[order.status] || statusConfig.pending;
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <div className="flex items-center gap-4 mb-6">
-        <button className="btn btn-ghost btn-sm" onClick={() => router.back()}>&larr; Back</button>
-        <h1 className="text-2xl font-bold">Order Detail</h1>
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      {/* Back + Title */}
+      <div className="flex items-center gap-3 mb-6 animate-fade-in">
+        <button
+          className="w-9 h-9 rounded-xl bg-base-200/80 hover:bg-base-200 flex items-center justify-center transition-colors cursor-pointer"
+          onClick={() => router.back()}
+          aria-label="Go back"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-base-content">Order Detail</h1>
+          <p className="text-xs text-base-content/50 font-mono">{order.id.slice(0, 8)}</p>
+        </div>
       </div>
 
+      {/* Toast message */}
       {message && (
-        <div className={`alert ${message.includes("success") || message.includes("uploaded") ? "alert-success" : "alert-error"} mb-6`}>
-          <span>{message}</span>
+        <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium animate-fade-in ${
+          message.includes("success") || message.includes("uploaded") || message.includes("confirmed")
+            ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+            : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
+        }`}>
+          {message}
         </div>
       )}
 
-      {/* Order Info */}
-      <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <p className="text-sm text-base-content/50">Order ID</p>
-            <p className="font-mono text-sm">{order.id.slice(0, 8)}...</p>
+      {/* Status Banner */}
+      <div className={`${status.bg} border rounded-2xl p-5 mb-5 animate-fade-in-up`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl ${status.text} bg-white/80 dark:bg-black/20 flex items-center justify-center shrink-0`}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d={status.icon} />
+            </svg>
           </div>
-          <span className={`badge ${statusColors[order.status] || "badge-ghost"}`}>
-            {statusLabels[order.status] || order.status}
-          </span>
+          <div>
+            <h2 className={`font-semibold ${status.text}`}>{status.label}</h2>
+            <p className="text-sm text-base-content/60">{status.description}</p>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-base-content/50">Type</p>
-            <p className="font-medium capitalize">{order.orderType}</p>
+      </div>
+
+      {/* Order Info */}
+      <div className="bg-base-100 border border-base-200 rounded-2xl p-5 mb-4 animate-fade-in-up">
+        <div className="flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <h3 className="text-sm font-semibold text-base-content">Order Info</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-base-200/50 rounded-xl p-3">
+            <p className="text-xs text-base-content/50 mb-0.5">Type</p>
+            <p className="text-sm font-semibold">{orderTypeLabels[order.orderType] || order.orderType}</p>
           </div>
-          <div>
-            <p className="text-base-content/50">Date</p>
-            <p className="font-medium">{new Date(order.createdAt).toLocaleDateString()}</p>
+          <div className="bg-base-200/50 rounded-xl p-3">
+            <p className="text-xs text-base-content/50 mb-0.5">Date</p>
+            <p className="text-sm font-semibold">
+              {new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Items */}
-      <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-6">
-        <h2 className="font-semibold mb-4">
-          {order.orderType === "subscription" ? "Subscription Package" : "Items"}
-        </h2>
-        <div className="space-y-3">
+      <div className="bg-base-100 border border-base-200 rounded-2xl p-5 mb-4 animate-fade-in-up">
+        <div className="flex items-center gap-2 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <h3 className="text-sm font-semibold text-base-content">
+            {order.orderType === "subscription" ? "Subscription Package" : "Items"}
+          </h3>
+        </div>
+        <div className="space-y-2.5">
           {order.orderType === "subscription" && order.paymentDetails ? (
             (() => {
               try {
                 const details = JSON.parse(order.paymentDetails);
                 return (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-3 p-3 bg-base-200/50 rounded-xl">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                       </svg>
                     </div>
                     <div className="flex-1">
@@ -221,13 +310,13 @@ export default function OrderDetailPage() {
             })()
           ) : (
             order.items.map((item) => (
-              <div key={item.id} className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded bg-base-200 overflow-hidden shrink-0 flex items-center justify-center">
+              <div key={item.id} className="flex items-center gap-3 p-3 bg-base-200/50 rounded-xl">
+                <div className="w-10 h-10 rounded-xl bg-base-200 overflow-hidden shrink-0 flex items-center justify-center">
                   {item.productImage ? (
                     <img src={getImageSrc(item.productImage)} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   )}
                 </div>
@@ -235,74 +324,119 @@ export default function OrderDetailPage() {
                   <p className="font-medium text-sm">{item.productName || "Product"}</p>
                   <p className="text-xs text-base-content/50">x{item.quantity}</p>
                 </div>
-                <span className="font-medium text-sm">{formatPrice(item.subtotal)} MMK</span>
+                <span className="font-semibold text-sm tabular-nums">{formatPrice(item.subtotal)} <span className="text-xs font-normal text-base-content/50">MMK</span></span>
               </div>
             ))
           )}
         </div>
-        <div className="border-t border-base-200 mt-4 pt-4 flex justify-between font-bold">
-          <span>Total</span>
-          <span className="text-primary">{formatPrice(order.totalAmount)} MMK</span>
+        <div className="border-t border-base-200 mt-4 pt-4 flex justify-between items-center">
+          <span className="font-semibold text-base-content">Total</span>
+          <span className="text-lg font-bold text-primary tabular-nums">{formatPrice(order.totalAmount)} <span className="text-sm font-normal text-base-content/50">MMK</span></span>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="space-y-4">
-        {/* Upload Payment Proof — only when pending and no proof yet */}
+      {/* Payment Section */}
+      <div className="space-y-4 animate-fade-in-up">
+        {/* Upload Payment Proof */}
         {order.status === "pending" && !order.paymentProofUrl && (
-          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
-            <h2 className="font-semibold mb-3">Upload Payment Proof</h2>
-            <p className="text-sm text-base-content/50 mb-3">Upload a screenshot of your bank transfer or payment.</p>
-            <input
-              type="file"
-              className="file-input file-input-bordered w-full"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleUploadProof}
-              disabled={uploading}
-            />
+          <div className="bg-base-100 border border-base-200 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h3 className="text-sm font-semibold text-base-content">Upload Payment Proof</h3>
+            </div>
+            <p className="text-sm text-base-content/50 mb-4">Upload a screenshot of your bank transfer or payment receipt.</p>
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-base-300 rounded-xl cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors">
+              <div className="flex flex-col items-center">
+                {uploading ? (
+                  <span className="loading loading-spinner loading-sm mb-2"></span>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-base-content/30 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                )}
+                <span className="text-sm text-base-content/50">{uploading ? "Uploading..." : "Click to upload"}</span>
+              </div>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleUploadProof}
+                disabled={uploading}
+              />
+            </label>
           </div>
         )}
 
-        {/* Payment Proof uploaded — show image + confirm button */}
+        {/* Payment Proof uploaded */}
         {order.paymentProofUrl && (
-          <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
-            <h2 className="font-semibold mb-3">Payment Proof</h2>
-            <img src={getImageSrc(order.paymentProofUrl)} alt="Payment proof" className="max-w-xs rounded-lg mb-4" />
+          <div className="bg-base-100 border border-base-200 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <h3 className="text-sm font-semibold text-base-content">Payment Proof</h3>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-base-200 mb-4">
+              <img src={getImageSrc(order.paymentProofUrl)} alt="Payment proof" className="w-full max-h-64 object-contain bg-base-200/30" />
+            </div>
             {order.status === "pending" && (
               <button
-                className={`btn btn-primary w-full ${confirming ? "loading" : ""}`}
+                className="btn btn-primary w-full"
                 onClick={handleConfirmPayment}
                 disabled={confirming}
               >
+                {confirming ? (
+                  <span className="loading loading-spinner loading-sm"></span>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
                 {confirming ? "Confirming..." : "Confirm Payment"}
               </button>
             )}
           </div>
         )}
 
-        {/* Waiting for admin approval (paid status) */}
+        {/* Waiting for approval */}
         {order.status === "paid" && (
-          <div className="bg-base-200/50 rounded-xl p-4 text-center text-base-content/50 text-sm">
-            Waiting for admin to approve your payment...
+          <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl p-5 text-center">
+            <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center mx-auto mb-2">
+              <span className="loading loading-spinner loading-sm text-sky-500"></span>
+            </div>
+            <p className="text-sm font-medium text-sky-700 dark:text-sky-400">Waiting for admin approval</p>
+            <p className="text-xs text-base-content/50 mt-1">We&apos;ll notify you once your payment is verified.</p>
           </div>
         )}
 
-        {/* Cancel — only pending orders */}
+        {/* Cancel */}
         {order.status === "pending" && (
           <button
-            className={`btn btn-outline btn-error w-full ${cancelling ? "loading" : ""}`}
+            className="btn btn-outline btn-error w-full"
             onClick={handleCancel}
             disabled={cancelling}
           >
+            {cancelling ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
             Cancel Order
           </button>
         )}
 
-        {/* Back to Dashboard — when no other actions available */}
+        {/* Back to Dashboard */}
         {!["pending", "paid"].includes(order.status) && (
-          <a href="/dashboard" className="btn btn-outline w-full">
+          <button className="btn btn-outline w-full" onClick={() => router.push("/dashboard")}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
             Back to Dashboard
-          </a>
+          </button>
         )}
       </div>
     </div>

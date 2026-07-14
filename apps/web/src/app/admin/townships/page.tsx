@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
+import { StatusBadge } from "@/components/admin/StatusBadge";
 
 interface Township {
   id: string;
@@ -106,32 +107,59 @@ export default function TownshipsPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in">
+      {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Townships</h1>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(!showCreate)}>
-          {showCreate ? "Cancel" : "+ Create Township"}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Townships</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage delivery townships</p>
+        </div>
+        <button
+          className="btn btn-primary btn-sm"
+          onClick={() => setShowCreate(!showCreate)}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showCreate ? "M6 18L18 6M6 6l12 12" : "M12 4v16m8-8H4"} />
+          </svg>
+          {showCreate ? "Cancel" : "Create Township"}
         </button>
       </div>
 
+      {/* Create Form */}
       {showCreate && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
-          <div className="card-body">
-            <h2 className="card-title">Create Township</h2>
+        <div className="bg-white rounded-2xl border border-gray-100 mb-6">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Create Township</h2>
             {createMsg && (
-              <div className="alert alert-error mb-4">
-                <span>{createMsg}</span>
+              <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium bg-red-50 text-red-700 border border-red-100">
+                {createMsg}
               </div>
             )}
             <form onSubmit={handleCreate} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Name <span className="text-red-500">*</span></label>
-                  <input type="text" className="input input-bordered w-full" value={createName} onChange={(e) => setCreateName(e.target.value)} required placeholder="Enter township name" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    required
+                    placeholder="Enter township name"
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Province <span className="text-red-500">*</span></label>
-                  <select className="select select-bordered w-full" value={createProvinceId} onChange={(e) => setCreateProvinceId(e.target.value)} required>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Province <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                    value={createProvinceId}
+                    onChange={(e) => setCreateProvinceId(e.target.value)}
+                    required
+                  >
                     <option value="">Select Province</option>
                     {provinces.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
@@ -140,7 +168,11 @@ export default function TownshipsPage() {
                 </div>
               </div>
               <div>
-                <button type="submit" className={`btn btn-primary w-full ${creating ? "loading" : ""}`} disabled={creating}>
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-sm"
+                  disabled={creating}
+                >
                   {creating ? "Creating..." : "Create Township"}
                 </button>
               </div>
@@ -149,22 +181,36 @@ export default function TownshipsPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
-        <div className="flex flex-wrap gap-4">
-          <input
-            type="text"
-            placeholder="Search townships..."
-            className="input input-bordered w-full max-w-xs"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          />
-          <select className="select select-bordered" value={provinceFilter} onChange={(e) => { setProvinceFilter(e.target.value); setPage(1); }}>
+      {/* Filters */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search townships..."
+              className="bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-full max-w-xs"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
+          <select
+            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            value={provinceFilter}
+            onChange={(e) => { setProvinceFilter(e.target.value); setPage(1); }}
+          >
             <option value="">All Provinces</option>
             {provinces.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          <select className="select select-bordered" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+          <select
+            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          >
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
@@ -172,41 +218,66 @@ export default function TownshipsPage() {
         </div>
       </div>
 
+      {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-8">
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 flex justify-center">
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       ) : townships.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-400">No townships found.</div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-12">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-gray-900">No townships found</p>
+            <p className="text-sm text-gray-400 mt-1">Try adjusting your filters or create a new township.</p>
+          </div>
+        </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl border border-gray-100">
           <div className="overflow-x-auto">
-            <table className="table">
+            <table className="w-full">
               <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Province</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th></th>
+                <tr className="border-t border-gray-100">
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Name</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Province</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Status</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Created</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 {townships.map((t) => (
-                  <tr key={t.id}>
-                    <td className="font-medium">{t.name}</td>
-                    <td>{t.provinceName || "-"}</td>
-                    <td>
-                      <span className={`badge ${t.isActive ? "badge-success" : "badge-warning"}`}>
-                        {t.isActive ? "Active" : "Inactive"}
-                      </span>
+                  <tr key={t.id} className="border-t border-gray-50 hover:bg-gray-50/50 transition-colors duration-150">
+                    <td className="px-5 py-3 text-sm font-medium text-gray-900">{t.name}</td>
+                    <td className="px-5 py-3 text-sm text-gray-600">{t.provinceName || "-"}</td>
+                    <td className="px-5 py-3">
+                      <StatusBadge value={t.isActive ? "active" : "inactive"} variant="product" />
                     </td>
-                    <td>{new Date(t.createdAt).toLocaleDateString()}</td>
-                    <td className="flex gap-1">
-                      <Link href={`/admin/townships/${t.id}`} className="btn btn-ghost btn-xs">Edit</Link>
-                      {t.isActive && (
-                        <button onClick={() => handleDeactivate(t.id)} className="btn btn-ghost btn-xs text-error">Deactivate</button>
-                      )}
+                    <td className="px-5 py-3 text-sm text-gray-500">{new Date(t.createdAt).toLocaleDateString()}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={`/admin/townships/${t.id}`}
+                          className="text-gray-300 hover:text-primary transition-colors p-1 rounded-lg hover:bg-gray-50"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </Link>
+                        {t.isActive && (
+                          <button
+                            onClick={() => handleDeactivate(t.id)}
+                            className="text-gray-300 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-gray-50"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

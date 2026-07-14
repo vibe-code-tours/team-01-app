@@ -70,11 +70,14 @@ export default function SubscriptionPage() {
     }
 
     setPurchasing(pkg.id);
-    const result = await userFetch<{ orderId: string }>("/subscriptions/purchase", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId: pkg.id }),
-    });
+    const result = await userFetch<{ orderId: string }>(
+      "/subscriptions/purchase",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packageId: pkg.id }),
+      },
+    );
     setPurchasing(null);
 
     if (result.success && result.data) {
@@ -150,12 +153,12 @@ export default function SubscriptionPage() {
                     key={pkg.id}
                     className={`relative rounded-2xl overflow-hidden transition-all duration-300 animate-fade-in-up ${
                       isFeatured
-                        ? "bg-gradient-to-br from-primary to-cyan-600 text-white shadow-xl shadow-primary/20 md:-mt-4 md:mb-4"
+                        ? "bg-gradient-to-br from-primary to-cyan-600 text-black shadow-xl shadow-primary/10 md:-mt-4 md:mb-4"
                         : "bg-base-100 shadow-sm hover:shadow-lg"
                     }`}
                   >
                     {isFeatured && (
-                      <div className="absolute top-0 right-0 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold px-4 py-1.5 rounded-bl-xl">
+                      <div className="absolute top-0 right-0 bg-white/20 backdrop-blur-sm text-black text-xs font-semibold px-4 py-1.5 rounded-bl-xl">
                         Most Popular
                       </div>
                     )}
@@ -166,7 +169,7 @@ export default function SubscriptionPage() {
                         {pkg.name}
                       </h3>
                       <p
-                        className={`text-sm mt-1 ${isFeatured ? "text-white/70" : "text-base-content/50"}`}
+                        className={`text-sm mt-1 ${isFeatured ? "text-black/70" : "text-base-content/50"}`}
                       >
                         {pkg.description ||
                           `${pkg.couponCount} coupons — each for 1 bottle of 20L water`}
@@ -178,7 +181,7 @@ export default function SubscriptionPage() {
                           {formatPrice(pkg.price)}
                         </span>
                         <span
-                          className={`text-sm ml-1 ${isFeatured ? "text-white/60" : "text-base-content/40"}`}
+                          className={`text-sm ml-1 ${isFeatured ? "text-black/60" : "text-base-content/40"}`}
                         >
                           MMK
                         </span>
@@ -220,7 +223,7 @@ export default function SubscriptionPage() {
                       <button
                         className={`btn w-full ${
                           isFeatured
-                            ? "bg-white text-primary border-white hover:bg-white/90"
+                            ? "bg-white text-black border-cyan-600 hover:bg-cyan-600/90"
                             : "btn-primary"
                         } ${purchasing === pkg.id ? "loading" : ""}`}
                         onClick={() => handlePurchase(pkg)}
