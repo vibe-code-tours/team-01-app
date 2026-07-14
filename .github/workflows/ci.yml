@@ -123,7 +123,8 @@ jobs:
         run: |
           API_URL="${{ needs.vercel-deploy-api.outputs.url }}"
           echo "Setting API_URL=$API_URL in web app"
-          vercel link --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system
+          cd apps/web
+          vercel link --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops
           echo "$API_URL" | vercel env add API_URL production --yes --token=${{ secrets.VERCEL_TOKEN }}
           echo "$API_URL" | vercel env add API_URL preview --yes --token=${{ secrets.VERCEL_TOKEN }}
 
