@@ -88,6 +88,10 @@ Browse the database with Drizzle Studio:
 npm run db:studio
 ```
 
+Then open [https://local.drizzle.studio](https://local.drizzle.studio) in your **Mac browser** (not inside the container).
+
+**Devcontainer note:** Drizzle Studio's UI is hosted at `local.drizzle.studio` and connects to a local API on port `4983`. Cursor does not always auto-forward that port, so open the **Ports** tab and make sure `4983` is forwarded before opening the URL. If the page loads but cannot connect, allow local/private network access in your browser.
+
 ### Local Development (without Docker)
 
 ```bash

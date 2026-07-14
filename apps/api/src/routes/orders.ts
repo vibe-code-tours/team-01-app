@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { eq, desc, count, sql } from "drizzle-orm";
-import { db, user, orders, orderItems, products } from "@water-delivery/db";
+import { db, user, orders, orderItems, products, subscriptions, orderSchedules, schedules, townships, deliveryPersons } from "@water-delivery/db";
 import { authMiddleware, requireRole } from "../middleware/auth.js";
 
 const routes = new Hono();
@@ -17,10 +17,10 @@ routes.get("/orders", requireRole("super-admin", "admin"), async (c) => {
 
   const conditions = [];
   if (status) {
-    conditions.push(eq(orders.status, status as "pending" | "paid" | "approved" | "rejected" | "scheduled" | "assigned" | "delivered" | "cancelled"));
+    conditions.push(sql`${orders.status} = ${status}`);
   }
   if (type) {
-    conditions.push(eq(orders.orderType, type as "retail" | "subscription"));
+    conditions.push(sql`${orders.orderType} = ${type}`);
   }
   if (search) {
     conditions.push(sql`(${user.name} ILIKE ${`%${search}%`} OR ${orders.id} ILIKE ${`%${search}%`})`);
@@ -36,6 +36,7 @@ routes.get("/orders", requireRole("super-admin", "admin"), async (c) => {
       userId: orders.userId,
       orderType: orders.orderType,
       totalAmount: orders.totalAmount,
+      bottleCount: orders.bottleCount,
       status: orders.status,
       createdAt: orders.createdAt,
       updatedAt: orders.updatedAt,
@@ -67,6 +68,7 @@ routes.get("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
       userId: orders.userId,
       orderType: orders.orderType,
       totalAmount: orders.totalAmount,
+      bottleCount: orders.bottleCount,
       status: orders.status,
       paymentProofUrl: orders.paymentProofUrl,
       paymentDetails: orders.paymentDetails,
@@ -85,6 +87,29 @@ routes.get("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
     return c.json({ success: false, error: "Order not found" }, 404);
   }
 
+  // For coupon-delivery orders, fetch schedule + delivery info
+  if (order.orderType === "coupon-delivery") {
+    const [scheduleInfo] = await db
+      .select({
+        scheduleId: orderSchedules.scheduleId,
+        townshipId: orderSchedules.townshipId,
+        deliveryAddress: orderSchedules.deliveryAddress,
+        contactPhone: orderSchedules.contactPhone,
+        notes: orderSchedules.notes,
+        scheduleDate: schedules.date,
+        scheduleTimeStart: schedules.timeStart,
+        scheduleTimeEnd: schedules.timeEnd,
+        townshipName: townships.name,
+      })
+      .from(orderSchedules)
+      .leftJoin(schedules, eq(orderSchedules.scheduleId, schedules.id))
+      .leftJoin(townships, eq(orderSchedules.townshipId, townships.id))
+      .where(eq(orderSchedules.orderId, id));
+
+    return c.json({ success: true, data: { ...order, scheduleInfo: scheduleInfo || null, items: [] } });
+  }
+
+  // For regular orders, fetch order items
   const items = await db
     .select({
       id: orderItems.id,
@@ -104,11 +129,75 @@ routes.get("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
 routes.patch("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
   const id = c.req.param("id") as string;
   const body = await c.req.json();
-  const { status, adminNotes } = body;
+  const { status, adminNotes, deliveryPersonId } = body;
 
   const [existing] = await db.select().from(orders).where(eq(orders.id, id));
   if (!existing) {
     return c.json({ success: false, error: "Order not found" }, 404);
+  }
+
+  // Handle coupon-delivery specific status transitions
+  if (existing.orderType === "coupon-delivery") {
+    if (status === "assigned") {
+      if (existing.status !== "pending") {
+        return c.json({ success: false, error: "Can only assign pending deliveries" }, 400);
+      }
+      if (!deliveryPersonId) {
+        return c.json({ success: false, error: "deliveryPersonId is required" }, 400);
+      }
+      const [dp] = await db
+        .select()
+        .from(deliveryPersons)
+        .where(sql`${deliveryPersons.id} = ${deliveryPersonId} AND ${deliveryPersons.status} = 'active'`);
+      if (!dp) {
+        return c.json({ success: false, error: "Delivery person not found or inactive" }, 400);
+      }
+    } else if (status === "delivered") {
+      if (existing.status !== "assigned") {
+        return c.json({ success: false, error: "Can only deliver assigned deliveries" }, 400);
+      }
+    } else if (status === "cancelled") {
+      if (existing.status === "delivered") {
+        return c.json({ success: false, error: "Cannot cancel delivered deliveries" }, 400);
+      }
+      // Return coupons + decrement schedule
+      const bottleCount = existing.bottleCount || 1;
+      const activeSubs = await db
+        .select()
+        .from(subscriptions)
+        .where(sql`${subscriptions.userId} = ${existing.userId} AND ${subscriptions.status} = 'active'`)
+        .orderBy(sql`${subscriptions.expiresAt} DESC`);
+
+      let remaining = bottleCount;
+      for (const sub of activeSubs) {
+        if (remaining <= 0) break;
+        const returned = Math.min(remaining, sub.couponsRemaining);
+        await db
+          .update(subscriptions)
+          .set({ couponsRemaining: sub.couponsRemaining + returned })
+          .where(eq(subscriptions.id, sub.id));
+        remaining -= returned;
+      }
+
+      const [orderSchedule] = await db
+        .select()
+        .from(orderSchedules)
+        .where(eq(orderSchedules.orderId, id));
+      if (orderSchedule) {
+        const [schedule] = await db
+          .select()
+          .from(schedules)
+          .where(eq(schedules.id, orderSchedule.scheduleId));
+        if (schedule) {
+          await db
+            .update(schedules)
+            .set({ currentOrders: Math.max(0, schedule.currentOrders - bottleCount) })
+            .where(eq(schedules.id, orderSchedule.scheduleId));
+        }
+      }
+    } else if (status) {
+      return c.json({ success: false, error: "Invalid status" }, 400);
+    }
   }
 
   const updates: Record<string, unknown> = {};
@@ -123,7 +212,40 @@ routes.patch("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
 
   const [updated] = await db.update(orders).set(updates).where(eq(orders.id, id)).returning();
 
+  // When subscription order is approved, create the subscription with coupons
+  if (status === "approved" && existing.orderType === "subscription" && existing.status !== "approved") {
+    try {
+      const details = JSON.parse(existing.paymentDetails || "{}");
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + (details.expiresInDays || 30));
+
+      await db.insert(subscriptions).values({
+        userId: existing.userId,
+        packageId: details.packageId,
+        couponsRemaining: details.couponCount,
+        expiresAt,
+      });
+    } catch (e) {
+      console.error("Failed to create subscription on approval:", e);
+    }
+  }
+
   return c.json({ success: true, data: updated });
+});
+
+// List active delivery persons (for assign dropdown)
+routes.get("/delivery-persons", requireRole("super-admin", "admin"), async (c) => {
+  const items = await db
+    .select({
+      id: deliveryPersons.id,
+      name: deliveryPersons.name,
+      phone: deliveryPersons.phone,
+    })
+    .from(deliveryPersons)
+    .where(sql`${deliveryPersons.status} = 'active'`)
+    .orderBy(deliveryPersons.name);
+
+  return c.json({ success: true, data: items });
 });
 
 export { routes as orderRoutes };

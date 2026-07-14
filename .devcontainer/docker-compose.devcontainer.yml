@@ -18,3 +18,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - default
+      - water-delivery
+
+networks:
+  water-delivery:
+    external: true
+    name: water-delivery_default

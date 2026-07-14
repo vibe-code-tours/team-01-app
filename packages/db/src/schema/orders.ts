@@ -1,7 +1,7 @@
-import { pgTable, uuid, varchar, text, decimal, pgEnum, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, text, decimal, integer, pgEnum, timestamp } from "drizzle-orm/pg-core";
 
 
-export const orderTypeEnum = pgEnum("order_type", ["retail", "subscription"]);
+export const orderTypeEnum = pgEnum("order_type", ["retail", "subscription", "coupon-delivery"]);
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "paid",
@@ -21,6 +21,7 @@ export const orders = pgTable("orders", {
   status: orderStatusEnum("status").default("pending").notNull(),
   paymentProofUrl: text("payment_proof_url"),
   paymentDetails: text("payment_details"),
+  bottleCount: integer("bottle_count"),
   adminNotes: text("admin_notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

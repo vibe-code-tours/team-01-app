@@ -55,6 +55,7 @@ services:
       - ./apps/api/src:/app/apps/api/src
       - ./packages/shared/src:/app/packages/shared/src
       - ./packages/db/src:/app/packages/db/src
+      - ./apps/api/uploads:/app/apps/api/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,6 +70,8 @@ services:
     container_name: water-delivery-web
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3006}
+      API_URL: http://api:3001
+      TRUSTED_ORIGIN: http://localhost:3005
       NODE_ENV: ${NODE_ENV:-development}
     ports:
       - "3005:3000"

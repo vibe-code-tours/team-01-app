@@ -42,7 +42,7 @@ function statusBadge(status: string | null) {
 export function UserTable({ users }: UserTableProps) {
   if (users.length === 0) {
     return (
-      <div className="text-center py-8 text-base-content/60">
+      <div className="text-center py-8 text-gray-400">
         No users found.
       </div>
     );

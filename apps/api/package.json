@@ -15,11 +15,14 @@
     "@water-delivery/db": "file:../../packages/db",
     "@water-delivery/shared": "file:../../packages/shared",
     "better-auth": "^1.6.23",
+    "busboy": "^1.6.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.6.0",
+    "sharp": "^0.34.5",
     "socket.io": "^4.8.0"
   },
   "devDependencies": {
+    "@types/busboy": "^1.5.4",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
   }
