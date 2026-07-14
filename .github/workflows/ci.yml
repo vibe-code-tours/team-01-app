@@ -123,8 +123,10 @@ jobs:
         run: |
           API_URL="${{ needs.vercel-deploy-api.outputs.url }}"
           echo "Setting API_URL=$API_URL in web app"
-          echo "$API_URL" | vercel env add API_URL production --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system
-          echo "$API_URL" | vercel env add API_URL preview --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system
+          cd apps/web
+          vercel link --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops
+          echo "$API_URL" | vercel env add API_URL production --yes --token=${{ secrets.VERCEL_TOKEN }}
+          echo "$API_URL" | vercel env add API_URL preview --yes --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel (production)
         id: deploy-prod
@@ -197,7 +199,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           cd apps/api
-          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system-api 2>&1 | tee /tmp/vercel-output.txt
+          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project api 2>&1 | tee /tmp/vercel-output.txt
           URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "### 🚀 API Production Deployment" >> $GITHUB_STEP_SUMMARY
@@ -209,7 +211,7 @@ jobs:
         if: github.ref != 'refs/heads/main'
         run: |
           cd apps/api
-          vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project water-delivery-system-api 2>&1 | tee /tmp/vercel-output.txt
+          vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project api 2>&1 | tee /tmp/vercel-output.txt
           URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "### 🚀 API Preview Deployment" >> $GITHUB_STEP_SUMMARY
