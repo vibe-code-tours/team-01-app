@@ -14,3 +14,5 @@ coverage/
 !.claude/settings.json
 .playwright-mcp/
 *.png
+apps/api/uploads/
+*.tsbuildinfo
