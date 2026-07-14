@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn, fetchSession } from "@/lib/api-client";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,26 +17,22 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn(email, password);
-    if (!result.success) {
-      setError(result.error || "Invalid credentials");
-      setLoading(false);
+    const res = await fetch("/api/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ name, email, password }),
+    });
+
+    const data = await res.json();
+    setLoading(false);
+
+    if (!res.ok) {
+      setError(data.message || "Registration failed");
       return;
     }
 
-    const session = await fetchSession();
-    setLoading(false);
-
-    if (session.success && session.data) {
-      const role = (session.data as { user: { role?: string } }).user?.role;
-      if (role === "super-admin" || role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
-    } else {
-      router.push("/dashboard");
-    }
+    router.push("/profile/complete");
   }
 
   return (
@@ -46,8 +42,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
             <span className="text-3xl" role="img" aria-label="water drop">💧</span>
           </div>
-          <h1 className="text-2xl font-bold text-base-content">Welcome Back</h1>
-          <p className="text-sm text-base-content/50 mt-1">Sign in to your account</p>
+          <h1 className="text-2xl font-bold text-base-content">Create Account</h1>
+          <p className="text-sm text-base-content/50 mt-1">Join Yay Thal Pya Zat today</p>
         </div>
 
         <div className="bg-base-100 rounded-2xl shadow-lg p-6">
@@ -58,6 +54,22 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit}>
+            <div className="form-control mb-4">
+              <label className="label" htmlFor="name">
+                <span className="label-text font-medium">Full Name</span>
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="Your name"
+                className="input input-bordered w-full"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                autoComplete="name"
+              />
+            </div>
+
             <div className="form-control mb-4">
               <label className="label" htmlFor="email">
                 <span className="label-text font-medium">Email</span>
@@ -81,12 +93,13 @@ export default function LoginPage() {
               <input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Min 8 characters"
                 className="input input-bordered w-full"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                autoComplete="current-password"
+                minLength={8}
+                autoComplete="new-password"
               />
             </div>
 
@@ -95,23 +108,19 @@ export default function LoginPage() {
               className={`btn btn-primary w-full ${loading ? "loading" : ""}`}
               disabled={loading}
             >
-              Sign In
+              Create Account
             </button>
           </form>
 
           <div className="text-center mt-4">
             <span className="text-sm text-base-content/50">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-primary font-medium hover:underline">
-                Sign up
+              Already have an account?{" "}
+              <Link href="/login" className="text-primary font-medium hover:underline">
+                Sign in
               </Link>
             </span>
           </div>
         </div>
-
-        <p className="text-center text-xs text-base-content/40 mt-6">
-          &copy; {new Date().getFullYear()} WaterDelivery. All rights reserved.
-        </p>
       </div>
     </div>
   );
