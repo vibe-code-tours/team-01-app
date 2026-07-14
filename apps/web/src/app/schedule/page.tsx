@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { userFetch, fetchSession } from "@/lib/api-client";
 
@@ -26,6 +26,14 @@ function formatDisplayDate(d: string) {
 }
 
 export default function SchedulePage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-16"><span className="loading loading-spinner loading-lg"></span></div>}>
+      <ScheduleContent />
+    </Suspense>
+  );
+}
+
+function ScheduleContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
