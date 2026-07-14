@@ -10,9 +10,8 @@ interface Order {
   id: string;
   orderType: string;
   totalAmount: string;
+  bottleCount: number | null;
   status: string;
-  deliveryAddress: string | null;
-  scheduledDate: string | null;
   createdAt: string;
   userName: string | null;
 }
@@ -28,7 +27,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("coupon-delivery");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -52,24 +51,27 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Orders</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Orders</h1>
 
-      <div className="flex flex-wrap gap-4 mb-6">
-        <select className="select select-bordered" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="paid">Paid</option>
-          <option value="approved">Approved</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="assigned">Assigned</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <select className="select select-bordered" value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}>
-          <option value="">All Types</option>
-          <option value="one-time">One-time</option>
-          <option value="subscription">Subscription</option>
-        </select>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="flex flex-wrap gap-4">
+          <select className="select select-bordered" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="approved">Approved</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="assigned">Assigned</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <select className="select select-bordered" value={typeFilter} onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}>
+            <option value="">All Types</option>
+            <option value="retail">Retail</option>
+            <option value="subscription">Subscription</option>
+            <option value="coupon-delivery">Coupon Delivery</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -77,37 +79,49 @@ export default function OrdersPage() {
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-8 text-base-content/60">No orders found.</div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-gray-400">No orders found.</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <tr key={order.id}>
-                  <td className="font-mono text-sm">{order.id.slice(0, 8)}...</td>
-                  <td>{order.userName || "Unknown"}</td>
-                  <td><StatusBadge value={order.orderType} variant="generic" /></td>
-                  <td>{Number(order.totalAmount).toLocaleString()} MMK</td>
-                  <td><StatusBadge value={order.status} variant="order" /></td>
-                  <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td>
-                    <Link href={`/admin/orders/${order.id}`} className="btn btn-ghost btn-xs">View</Link>
-                  </td>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    <td className="font-mono text-sm">{order.id.slice(0, 8)}...</td>
+                    <td>{order.userName || "Unknown"}</td>
+                    <td>
+                      <StatusBadge value={order.orderType} variant="generic" />
+                      {order.orderType === "coupon-delivery" && order.bottleCount && (
+                        <span className="text-xs text-gray-500 ml-1">({order.bottleCount}x)</span>
+                      )}
+                    </td>
+                    <td>
+                      {order.orderType === "coupon-delivery"
+                        ? `${order.bottleCount || 0} coupons`
+                        : `${Number(order.totalAmount).toLocaleString()} MMK`
+                      }
+                    </td>
+                    <td><StatusBadge value={order.status} variant="order" /></td>
+                    <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <Link href={`/admin/orders/${order.id}`} className="btn btn-ghost btn-xs">View</Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
