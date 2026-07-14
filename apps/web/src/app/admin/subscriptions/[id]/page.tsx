@@ -8,13 +8,11 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 interface SubscriptionDetail {
   id: string;
   userId: string;
-  packageId: string;
   status: string;
   couponsRemaining: number;
-  couponsTotal: number;
-  startDate: string;
-  endDate: string;
+  couponCount: number;
   createdAt: string;
+  expiresAt: string;
   userName: string | null;
   userEmail: string | null;
   packageName: string | null;
@@ -53,10 +51,10 @@ export default function SubscriptionDetailPage() {
     <div className="max-w-2xl">
       <div className="flex items-center gap-4 mb-6">
         <button className="btn btn-ghost btn-sm" onClick={() => router.back()}>&larr; Back</button>
-        <h1 className="text-2xl font-bold">Subscription Detail</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Subscription Detail</h1>
       </div>
 
-      <div className="card bg-base-100 shadow mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
         <div className="card-body">
           <h2 className="card-title">Customer</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -66,7 +64,7 @@ export default function SubscriptionDetailPage() {
         </div>
       </div>
 
-      <div className="card bg-base-100 shadow mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
         <div className="card-body">
           <h2 className="card-title">Subscription Info</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -76,9 +74,9 @@ export default function SubscriptionDetailPage() {
             {subscription.packagePrice && (
               <div><span className="font-semibold">Price:</span> {Number(subscription.packagePrice).toLocaleString()} MMK</div>
             )}
-            <div><span className="font-semibold">Coupons Remaining:</span> {subscription.couponsRemaining} / {subscription.couponsTotal}</div>
-            <div><span className="font-semibold">Start Date:</span> {new Date(subscription.startDate).toLocaleDateString()}</div>
-            <div><span className="font-semibold">End Date:</span> {new Date(subscription.endDate).toLocaleDateString()}</div>
+            <div><span className="font-semibold">Coupons Remaining:</span> {subscription.couponsRemaining} / {subscription.couponCount}</div>
+            <div><span className="font-semibold">Start Date:</span> {new Date(subscription.createdAt).toLocaleDateString()}</div>
+            <div><span className="font-semibold">End Date:</span> {new Date(subscription.expiresAt).toLocaleDateString()}</div>
             <div><span className="font-semibold">Created:</span> {new Date(subscription.createdAt).toLocaleDateString()}</div>
           </div>
           {subscription.packageDescription && (
@@ -90,13 +88,13 @@ export default function SubscriptionDetailPage() {
         </div>
       </div>
 
-      <div className="card bg-base-100 shadow">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="card-body">
           <h2 className="card-title">Coupon Usage</h2>
           <div className="stats shadow w-full">
             <div className="stat">
               <div className="stat-title">Total Coupons</div>
-              <div className="stat-value">{subscription.couponsTotal}</div>
+              <div className="stat-value">{subscription.couponCount}</div>
             </div>
             <div className="stat">
               <div className="stat-title">Remaining</div>
@@ -104,7 +102,7 @@ export default function SubscriptionDetailPage() {
             </div>
             <div className="stat">
               <div className="stat-title">Used</div>
-              <div className="stat-value text-warning">{subscription.couponsTotal - subscription.couponsRemaining}</div>
+              <div className="stat-value text-warning">{subscription.couponCount - subscription.couponsRemaining}</div>
             </div>
           </div>
         </div>
