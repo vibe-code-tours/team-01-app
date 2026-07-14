@@ -40,15 +40,15 @@ interface CouponDelivery {
   scheduleTimeEnd: string;
 }
 
-const statusColors: Record<string, string> = {
-  pending: "badge-warning",
-  paid: "badge-info",
-  approved: "badge-info",
-  scheduled: "badge-primary",
-  assigned: "badge-secondary",
-  delivered: "badge-success",
-  cancelled: "badge-error",
-  rejected: "badge-error",
+const statusStyles: Record<string, { bg: string; text: string }> = {
+  pending: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-800 dark:text-amber-300" },
+  paid: { bg: "bg-teal-100 dark:bg-teal-900/30", text: "text-teal-800 dark:text-teal-300" },
+  approved: { bg: "bg-indigo-100 dark:bg-indigo-900/30", text: "text-indigo-800 dark:text-indigo-300" },
+  scheduled: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-800 dark:text-blue-300" },
+  assigned: { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-800 dark:text-violet-300" },
+  delivered: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-800 dark:text-emerald-300" },
+  cancelled: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-800 dark:text-red-300" },
+  rejected: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-800 dark:text-red-300" },
 };
 
 const statusLabels: Record<string, string> = {
@@ -62,14 +62,33 @@ const statusLabels: Record<string, string> = {
   rejected: "Rejected",
 };
 
+const orderTypeLabels: Record<string, string> = {
+  retail: "Retail",
+  subscription: "Subscription",
+  "coupon-delivery": "Coupon",
+};
+
 function formatPrice(price: string | number) {
   return new Intl.NumberFormat("en-US", { style: "decimal", maximumFractionDigits: 0 }).format(Number(price));
+}
+
+function formatDateShort(date: string) {
+  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const style = statusStyles[status] || { bg: "bg-gray-100", text: "text-gray-600" };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+      {statusLabels[status] || status}
+    </span>
+  );
 }
 
 export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [activeSubscriptions, setActiveSubscriptions] = useState<Subscription[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [couponDeliveries, setCouponDeliveries] = useState<CouponDelivery[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,23 +113,7 @@ export default function DashboardPage() {
         const activeSubs = subsRes.data.filter(
           (s) => s.couponsRemaining > 0 && new Date(s.expiresAt) > new Date()
         );
-        if (activeSubs.length > 0) {
-          const totalCouponsRemaining = activeSubs.reduce((sum, s) => sum + s.couponsRemaining, 0);
-          const totalCouponCount = activeSubs.reduce((sum, s) => sum + s.couponCount, 0);
-          const earliestExpiry = activeSubs.reduce((earliest, s) => {
-            const exp = new Date(s.expiresAt);
-            return exp < earliest ? exp : earliest;
-          }, new Date(activeSubs[0].expiresAt));
-          setSubscription({
-            id: activeSubs.map((s) => s.id).join(","),
-            packageName: `${activeSubs.length} Active Plan${activeSubs.length > 1 ? "s" : ""}`,
-            couponsRemaining: totalCouponsRemaining,
-            couponCount: totalCouponCount,
-            expiresAt: earliestExpiry.toISOString(),
-          });
-        } else {
-          setSubscription(null);
-        }
+        setActiveSubscriptions(activeSubs);
       }
       if (ordersRes.success && ordersRes.data) {
         setOrders(ordersRes.data.orders || []);
@@ -126,138 +129,305 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 flex justify-center">
+      <div className="max-w-6xl mx-auto px-4 py-16 flex justify-center">
         <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
 
+  const totalCouponsRemaining = activeSubscriptions.reduce((sum, s) => sum + s.couponsRemaining, 0);
+  const totalCouponCount = activeSubscriptions.reduce((sum, s) => sum + s.couponCount, 0);
+  const hasSubscription = activeSubscriptions.length > 0;
+  const pendingDeliveries = couponDeliveries.length;
+  const totalOrders = orders.length;
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Welcome{profile?.name ? `, ${profile.name}` : ""}</h1>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Welcome Header */}
+      <div className="mb-8 animate-fade-in">
+        <h1 className="text-2xl sm:text-3xl font-bold text-base-content">
+          Welcome back{profile?.name ? `, ${profile.name}` : ""}
+        </h1>
         {profile?.provinceName && (
-          <p className="text-base-content/50">
+          <p className="text-base-content/50 mt-1 flex items-center gap-1.5 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
             {profile.provinceName}{profile.townshipName ? `, ${profile.townshipName}` : ""}
           </p>
         )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <Link href="/products" className="btn btn-primary btn-lg">
-          Order Products
-        </Link>
-        <Link href="/subscription" className="btn btn-outline btn-lg">
-          Buy Subscription
-        </Link>
-      </div>
+      {/* Bento Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 stagger">
 
-      {/* Active Subscription */}
-      {subscription && (
-        <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h2 className="font-semibold text-lg">Active Subscription</h2>
-              <p className="text-sm text-base-content/50">{subscription.packageName}</p>
-            </div>
-            <span className="badge badge-success">Active</span>
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <p className="text-3xl font-bold text-primary">
-                {subscription.couponsRemaining}
-              </p>
-              <p className="text-sm text-base-content/50">
-                coupons remaining
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-base-content/50">Earliest Expiry</p>
-              <p className="font-medium">{new Date(subscription.expiresAt).toLocaleDateString()}</p>
+        {/* Stat: Coupons Remaining */}
+        <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl p-5 text-white card-hover animate-fade-in-up cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-white/70 text-xs font-medium uppercase tracking-wider">Coupons</span>
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+              </svg>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="w-full bg-base-200 rounded-full h-2">
-              <div
-                className="bg-primary h-2 rounded-full transition-all"
-                style={{
-                  width: `${(subscription.couponsRemaining / subscription.couponCount) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-          {subscription.couponsRemaining > 0 && (
-            <Link href="/coupon-deliveries" className="btn btn-primary btn-sm mt-4">
-              Schedule Delivery
-            </Link>
-          )}
+          <p className="text-3xl font-bold">{totalCouponsRemaining}</p>
+          <p className="text-white/60 text-xs mt-1">available for delivery</p>
         </div>
-      )}
 
-      {/* Scheduled Deliveries */}
-      {couponDeliveries.length > 0 && (
-        <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6 mb-8">
-          <h2 className="font-semibold text-lg mb-4">My Scheduled Deliveries</h2>
-          <div className="space-y-3">
-            {couponDeliveries.map((d) => (
-              <div key={d.id} className="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
-                <div>
-                  <p className="font-medium text-sm">{d.bottleCount} x 20L Water Bottle</p>
-                  <p className="text-xs text-base-content/50">{d.scheduleDate} {d.scheduleTimeStart} — {d.scheduleTimeEnd}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`badge badge-sm ${statusColors[d.status] || "badge-ghost"}`}>
-                    {statusLabels[d.status] || d.status}
-                  </span>
-                  <Link href={`/coupon-deliveries/${d.id}`} className="btn btn-ghost btn-xs">View</Link>
-                </div>
+        {/* Stat: Pending Deliveries */}
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-5 card-hover animate-fade-in-up cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider">Pending</span>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-base-content">{pendingDeliveries}</p>
+          <p className="text-base-content/50 text-xs mt-1">scheduled deliveries</p>
+        </div>
+
+        {/* Stat: Total Orders */}
+        <div className="bg-base-100 border border-base-200 rounded-2xl p-5 card-hover animate-fade-in-up cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-base-content/50 text-xs font-medium uppercase tracking-wider">Orders</span>
+            <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-base-content">{totalOrders}</p>
+          <p className="text-base-content/50 text-xs mt-1">total orders placed</p>
+        </div>
+
+        {/* Quick Action: Order Water */}
+        <Link
+          href="/products"
+          className="group bg-base-100 border border-base-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 card-hover animate-fade-in-up text-center cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+            </svg>
+          </div>
+          <span className="text-sm font-semibold text-base-content">Order Water</span>
+          <span className="text-xs text-base-content/50">Browse products</span>
+        </Link>
+
+        {/* Subscription Card — spans 2 cols on sm+ */}
+        {hasSubscription ? (
+          <div className="sm:col-span-2 bg-base-100 border border-base-200 rounded-2xl p-6 animate-fade-in-up">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="font-semibold text-base-content">My Subscriptions</h3>
+                <p className="text-sm text-base-content/50 mt-0.5">
+                  {activeSubscriptions.length} active plan{activeSubscriptions.length > 1 ? "s" : ""} &middot; {totalCouponsRemaining} coupons left
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Active
+              </span>
+            </div>
 
-      {/* Recent Orders */}
-      <div className="bg-base-100 rounded-xl shadow-sm border border-base-200 p-6">
-        <h2 className="font-semibold text-lg mb-4">Recent Orders</h2>
-        {orders.length === 0 ? (
-          <p className="text-base-content/50 text-center py-8">No orders yet.</p>
+            {/* Overall progress bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs text-base-content/50 mb-1.5">
+                <span>{totalCouponsRemaining} of {totalCouponCount} coupons remaining</span>
+                <span>{totalCouponCount > 0 ? Math.round((totalCouponsRemaining / totalCouponCount) * 100) : 0}%</span>
+              </div>
+              <div className="w-full bg-base-200 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-primary to-cyan-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${totalCouponCount > 0 ? (totalCouponsRemaining / totalCouponCount) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Individual subscriptions */}
+            <div className="space-y-2 mb-4">
+              {activeSubscriptions.map((sub) => (
+                <div key={sub.id} className="flex items-center justify-between p-2.5 rounded-xl bg-base-200/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-base-content">{sub.packageName}</p>
+                      <p className="text-xs text-base-content/50">
+                        Expires {new Date(sub.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-primary tabular-nums">{sub.couponsRemaining}</span>
+                    <span className="text-xs text-base-content/40">/ {sub.couponCount}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <Link href="/coupon-deliveries" className="btn btn-primary btn-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Schedule Delivery
+              </Link>
+              <Link href="/subscription" className="btn btn-ghost btn-sm text-base-content/60">
+                View Plans
+              </Link>
+            </div>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <tr key={order.id}>
-                    <td className="text-sm">{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td className="text-sm capitalize">{order.orderType}</td>
-                    <td className="text-sm font-medium">{formatPrice(order.totalAmount)} MMK</td>
-                    <td>
-                      <span className={`badge badge-sm ${statusColors[order.status] || "badge-ghost"}`}>
-                        {statusLabels[order.status] || order.status}
-                      </span>
-                    </td>
-                    <td>
-                      <Link href={`/orders/${order.id}`} className="btn btn-ghost btn-xs">
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="sm:col-span-2 bg-gradient-to-br from-primary/5 to-cyan-500/5 border border-dashed border-base-300 rounded-2xl p-6 flex flex-col items-center justify-center text-center animate-fade-in-up">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-base-content mb-1">No Active Subscription</h3>
+            <p className="text-sm text-base-content/50 mb-3">Get a plan to start ordering water deliveries</p>
+            <Link href="/subscription" className="btn btn-primary btn-sm">
+              Browse Plans
+            </Link>
           </div>
         )}
+
+        {/* Quick Action: Subscribe */}
+        <Link
+          href="/subscription"
+          className="group bg-base-100 border border-base-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 card-hover animate-fade-in-up text-center cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center group-hover:bg-cyan-500 group-hover:text-white transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-cyan-500 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <span className="text-sm font-semibold text-base-content">Subscribe</span>
+          <span className="text-xs text-base-content/50">Get coupon plans</span>
+        </Link>
+
+        {/* Quick Action: Profile */}
+        <Link
+          href="/profile/complete"
+          className="group bg-base-100 border border-base-200 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 card-hover animate-fade-in-up text-center cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center group-hover:bg-violet-500 group-hover:text-white transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-500 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <span className="text-sm font-semibold text-base-content">Profile</span>
+          <span className="text-xs text-base-content/50">Manage account</span>
+        </Link>
+
+        {/* Scheduled Deliveries — spans 2 cols on lg */}
+        {couponDeliveries.length > 0 && (
+          <div className="lg:col-span-2 bg-base-100 border border-base-200 rounded-2xl p-5 animate-fade-in-up">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-base-content flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Scheduled Deliveries
+              </h3>
+            </div>
+            <div className="space-y-2.5">
+              {couponDeliveries.map((d) => (
+                <Link
+                  key={d.id}
+                  href={`/coupon-deliveries/${d.id}`}
+                  className="flex items-center justify-between p-3 rounded-xl bg-base-200/50 hover:bg-base-200 transition-colors duration-150 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-base-content">{d.bottleCount} x 20L Bottles</p>
+                      <p className="text-xs text-base-content/50">{formatDateShort(d.scheduleDate)} {d.scheduleTimeStart} - {d.scheduleTimeEnd}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={d.status} />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/30 group-hover:text-base-content/60 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Orders — spans 2 cols on lg */}
+        <div className="lg:col-span-2 bg-base-100 border border-base-200 rounded-2xl p-5 animate-fade-in-up">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-base-content flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Recent Orders
+            </h3>
+          </div>
+          {orders.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-12 h-12 rounded-2xl bg-base-200 flex items-center justify-center mx-auto mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-base-content/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <p className="text-sm text-base-content/50 mb-2">No orders yet</p>
+              <Link href="/products" className="text-sm text-primary font-medium hover:underline">
+                Start shopping
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {orders.map((order) => (
+                <Link
+                  key={order.id}
+                  href={`/orders/${order.id}`}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200/50 transition-colors duration-150 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-base-content/50">
+                        {(orderTypeLabels[order.orderType] || order.orderType).charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-base-content">
+                        {orderTypeLabels[order.orderType] || order.orderType}
+                      </p>
+                      <p className="text-xs text-base-content/50">{formatDateShort(order.createdAt)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {order.orderType !== "coupon-delivery" && (
+                      <span className="text-sm font-semibold text-base-content tabular-nums">
+                        {formatPrice(order.totalAmount)} <span className="text-xs font-normal text-base-content/50">MMK</span>
+                      </span>
+                    )}
+                    <StatusBadge status={order.status} />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/30 group-hover:text-base-content/60 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
