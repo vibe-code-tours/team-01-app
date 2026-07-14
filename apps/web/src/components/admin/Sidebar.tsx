@@ -119,7 +119,11 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-5">
         <Link href="/admin" className="flex items-center gap-2.5 font-bold text-white text-lg tracking-tight">
-          <span className="text-xl" role="img" aria-label="water drop">💧</span>
+          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+            </svg>
+          </div>
           Admin Panel
         </Link>
       </div>

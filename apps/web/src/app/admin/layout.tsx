@@ -73,9 +73,9 @@ export default function AdminLayout({
         {/* Top bar */}
         <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between h-14 px-4 lg:px-6">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
-                className="btn btn-ghost btn-sm btn-square lg:hidden"
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors lg:hidden"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open sidebar"
               >
@@ -85,21 +85,19 @@ export default function AdminLayout({
               </button>
               <span className="text-sm font-medium text-gray-500 lg:hidden">Admin</span>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {user && (
                 <>
                   <div className="text-right hidden sm:block">
                     <div className="text-sm font-medium text-gray-900">{user.name}</div>
                     <div className="text-xs text-gray-500">{user.role}</div>
                   </div>
-                  <div className="avatar placeholder">
-                    <div className="bg-blue-500/10 text-blue-600 rounded-full w-8">
-                      <span className="text-xs font-semibold">{user.name?.charAt(0)}</span>
-                    </div>
+                  <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <span className="text-xs font-semibold">{user.name?.charAt(0)}</span>
                   </div>
                 </>
               )}
-              <button onClick={handleSignOut} className="btn btn-ghost btn-sm text-gray-400 hover:text-red-500">
+              <button onClick={handleSignOut} className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors" aria-label="Sign out">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
                   <polyline points="16 17 21 12 16 7"/>
