@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api-bir004ynp-klockdevops.vercel.app";
 const TOKEN_KEY = "water-delivery-token";
 
 interface ApiResponse<T = unknown> {

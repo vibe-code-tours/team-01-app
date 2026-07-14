@@ -58,7 +58,7 @@ export const auth = betterAuth({
     passkey({
       rpName: "Water Delivery",
       rpID: "localhost",
-      origin: process.env.BETTER_AUTH_URL || "http://localhost:3001",
+      origin: process.env.BETTER_AUTH_URL || "https://api-bir004ynp-klockdevops.vercel.app",
     }),
     twoFactor({
       issuer: "Water Delivery",
