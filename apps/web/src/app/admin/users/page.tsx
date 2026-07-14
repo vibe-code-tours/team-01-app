@@ -90,14 +90,14 @@ export default function UsersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Users</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
         <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(!showCreate)}>
           {showCreate ? "Cancel" : "+ Create User"}
         </button>
       </div>
 
       {showCreate && (
-        <div className="card bg-base-100 shadow-xl mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
           <div className="card-body">
             <h2 className="card-title">Create New User</h2>
             {createMsg && (
@@ -136,25 +136,27 @@ export default function UsersPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search by name or email..."
-          className="input input-bordered w-full max-w-xs"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-        />
-        <select
-          className="select select-bordered"
-          value={roleFilter}
-          onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
-        >
-          <option value="">All Roles</option>
-          <option value="super-admin">Super Admin</option>
-          <option value="admin">Admin</option>
-          <option value="delivery">Delivery</option>
-          <option value="user">User</option>
-        </select>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="flex flex-wrap gap-4">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            className="input input-bordered w-full max-w-xs"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          />
+          <select
+            className="select select-bordered"
+            value={roleFilter}
+            onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+          >
+            <option value="">All Roles</option>
+            <option value="super-admin">Super Admin</option>
+            <option value="admin">Admin</option>
+            <option value="delivery">Delivery</option>
+            <option value="user">User</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -162,7 +164,9 @@ export default function UsersPage() {
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       ) : (
-        <UserTable users={users} />
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <UserTable users={users} />
+        </div>
       )}
 
       {pagination && pagination.totalPages > 1 && (

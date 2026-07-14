@@ -82,10 +82,10 @@ export default function EditUserPage() {
         <button className="btn btn-ghost btn-sm" onClick={() => router.back()}>
           &larr; Back
         </button>
-        <h1 className="text-2xl font-bold">Edit User</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Edit User</h1>
       </div>
 
-      <div className="card bg-base-100 shadow-xl">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="card-body">
           <div className="text-sm text-base-content/60 mb-4">
             {user.email} &middot; Created {new Date(user.createdAt).toLocaleDateString()}
