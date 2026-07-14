@@ -90,7 +90,7 @@ jobs:
           echo "**${IMAGE_URL}**" >> $GITHUB_STEP_SUMMARY
 
   vercel-deploy:
-    needs: ci
+    needs: [ci, vercel-deploy-api]
     runs-on: ubuntu-latest
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
@@ -119,14 +119,14 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Get version tag
-        id: version
+      - name: Set API_URL env var from deployed API
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "tag=prod" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-          fi
+          API_URL="${{ needs.vercel-deploy-api.outputs.url }}"
+          echo "Setting API_URL=$API_URL in web app"
+          cd apps/web
+          vercel link --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops
+          echo "$API_URL" | vercel env add API_URL production --yes --token=${{ secrets.VERCEL_TOKEN }}
+          echo "$API_URL" | vercel env add API_URL preview --yes --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy to Vercel (production)
         id: deploy-prod
@@ -162,4 +162,67 @@ jobs:
             echo "### 🚀 Deployment" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "[**${{ steps.deploy-preview.outputs.url }}**](${{ steps.deploy-preview.outputs.url }})" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  vercel-deploy-api:
+    needs: ci
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && (github.actor == 'thatoe' || github.actor == 'wythwin' || github.actor == 'KhinSuSuChit' || github.actor == 'linletlettun' || github.actor == 'hanpainghtoo' || github.actor == 'haymannko' || github.actor == 'Wailynn351'))
+    outputs:
+      url: ${{ steps.export-url.outputs.url }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy API to Vercel (production)
+        id: deploy-prod
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cd apps/api
+          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project api 2>&1 | tee /tmp/vercel-output.txt
+          URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "### 🚀 API Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[**$URL**]($URL)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deploy API to Vercel (preview)
+        id: deploy-preview
+        if: github.ref != 'refs/heads/main'
+        run: |
+          cd apps/api
+          vercel --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops --project api 2>&1 | tee /tmp/vercel-output.txt
+          URL=$(grep -oP 'https://\S+\.vercel\.app' /tmp/vercel-output.txt | head -1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "### 🚀 API Preview Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[**$URL**]($URL)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Export API deployment URL
+        id: export-url
+        run: |
+          if [ -n "${{ steps.deploy-prod.outputs.url }}" ]; then
+            echo "url=${{ steps.deploy-prod.outputs.url }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=${{ steps.deploy-preview.outputs.url }}" >> "$GITHUB_OUTPUT"
           fi
