@@ -33,4 +33,4 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3001
-CMD ["node", "apps/api/dist/index.js"]
+CMD ["node", "--import", "tsx", "apps/api/src/index.ts"]
