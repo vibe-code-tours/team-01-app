@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@better-auth/passkey": "^1.6.23",
-    "@hono/node-server": "^1.13.0",
+    "@hono/node-server": "^2.0.9",
     "@water-delivery/db": "file:../../packages/db",
     "@water-delivery/shared": "file:../../packages/shared",
     "better-auth": "^1.6.23",
