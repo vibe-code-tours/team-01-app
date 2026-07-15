@@ -5,7 +5,11 @@ const TRUSTED_ORIGIN = process.env.TRUSTED_ORIGIN || "http://localhost:3005";
 
 async function proxyRequest(request: NextRequest, path: string) {
   const url = new URL(request.url);
-  const apiUrl = new URL(`/api/${path}`, API_BASE);
+  // Socket.IO: /api/socket-io/* -> /socket.io/*
+  const apiPath = path === "socket-io" || path.startsWith("socket-io/")
+    ? `/socket.io/${path.slice("socket-io".length)}`
+    : `/api/${path}`;
+  const apiUrl = new URL(apiPath, API_BASE);
   apiUrl.search = url.search;
 
   const headers = new Headers();
@@ -38,7 +42,7 @@ async function proxyRequest(request: NextRequest, path: string) {
 
   apiRes.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
-    if (lower === "content-length" || lower === "transfer-encoding" || lower === "connection" || lower === "set-cookie") return;
+    if (lower === "content-length" || lower === "transfer-encoding" || lower === "connection" || lower === "set-cookie" || lower === "content-encoding") return;
     response.headers.set(key, value);
   });
 
