@@ -3,7 +3,7 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "apps/api/Dockerfile",
-    "dockerfileStage": "api-prod",
+    "dockerfileStage": "runner",
     "context": "."
   }
 }
