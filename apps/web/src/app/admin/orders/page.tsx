@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import type { Socket } from "socket.io-client";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { getSocket, onSocketReady } from "@/lib/socket";
 
 interface Order {
   id: string;
@@ -37,7 +39,7 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (statusFilter) params.set("status", statusFilter);
@@ -49,11 +51,46 @@ export default function OrdersPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, statusFilter, typeFilter]);
 
   useEffect(() => {
     loadOrders();
-  }, [page, statusFilter, typeFilter]);
+  }, [loadOrders]);
+
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+    let mounted = true;
+    let attached = false;
+
+    function attach(socket: Socket) {
+      if (attached) return;
+      attached = true;
+      socket.on("order:new", loadOrders);
+      socket.on("order:status-changed", loadOrders);
+      socket.on("delivery:new", loadOrders);
+      socket.on("delivery:status-changed", loadOrders);
+      cleanup = () => {
+        socket.off("order:new", loadOrders);
+        socket.off("order:status-changed", loadOrders);
+        socket.off("delivery:new", loadOrders);
+        socket.off("delivery:status-changed", loadOrders);
+      };
+    }
+
+    const socket = getSocket();
+    if (socket) {
+      attach(socket);
+    } else {
+      const unsubscribe = onSocketReady(() => {
+        if (!mounted) return;
+        const s = getSocket();
+        if (s) attach(s);
+      });
+      cleanup = () => { unsubscribe(); };
+    }
+
+    return () => { mounted = false; cleanup?.(); };
+  }, [loadOrders]);
 
   return (
     <div className="animate-fade-in">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
@@ -45,7 +45,7 @@ export default function SubscriptionPackagesPage() {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [search]);
 
-  async function loadPackages() {
+  const loadPackages = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (debouncedSearch) params.set("search", debouncedSearch);
@@ -57,11 +57,11 @@ export default function SubscriptionPackagesPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, debouncedSearch, statusFilter]);
 
   useEffect(() => {
     loadPackages();
-  }, [page, debouncedSearch, statusFilter]);
+  }, [loadPackages]);
 
   function toggleCreateForm() {
     const next = !showCreate;

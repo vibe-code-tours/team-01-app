@@ -1,6 +1,8 @@
 # ── Production ──────────────────────────────────────────
 FROM node:22-alpine
 ENV NODE_ENV=production
+FROM node:22-alpine AS base
+RUN apk add --no-cache bash
 WORKDIR /app
 
 # Copy workspace root files

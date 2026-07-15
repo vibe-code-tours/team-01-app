@@ -1,8 +1,8 @@
-import { randomBytes, scrypt } from "node:crypto";
 import { count, eq, sql } from "drizzle-orm";
 import { closeDb, db } from "./db.js";
 import { user, account } from "./schema/auth.js";
 import { products, provinces, subscriptionPackages, townships } from "./schema/index.js";
+import { auth } from "../../../apps/api/src/lib/auth.js";
 
 const SEED_TABLES = ["account", "user", "townships", "provinces", "subscription_packages", "products"] as const;
 
@@ -13,17 +13,6 @@ const SUPER_ADMIN = {
   role: "super-admin",
   status: "active",
 };
-
-async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-  const key = await new Promise<Buffer>((resolve, reject) => {
-    scrypt(password.normalize("NFKC"), salt, 64, { N: 16384, r: 16, p: 1, maxmem: 128 * 16384 * 16 * 2 }, (err, key) => {
-      if (err) reject(err);
-      else resolve(key);
-    });
-  });
-  return `${salt}:${key.toString("hex")}`;
-}
 
 async function clearSeedData(): Promise<void> {
   await db.execute(sql.raw(`TRUNCATE ${SEED_TABLES.map((t) => (t === "user" ? `"${t}"` : t)).join(", ")} CASCADE`));
@@ -42,25 +31,22 @@ async function seedSuperAdmin(): Promise<void> {
     return;
   }
 
-  const userId = crypto.randomUUID();
-  const passwordHash = await hashPassword(SUPER_ADMIN.password);
-
-  await db.insert(user).values({
-    id: userId,
-    email: SUPER_ADMIN.email,
-    name: SUPER_ADMIN.name,
-    role: SUPER_ADMIN.role,
-    status: SUPER_ADMIN.status,
-    emailVerified: true,
+  // Use better-auth to create the user with proper password hashing
+  const result = await auth.api.signUpEmail({
+    body: {
+      email: SUPER_ADMIN.email,
+      password: SUPER_ADMIN.password,
+      name: SUPER_ADMIN.name,
+    },
   });
 
-  await db.insert(account).values({
-    id: crypto.randomUUID(),
-    accountId: SUPER_ADMIN.email,
-    providerId: "credential",
-    userId,
-    password: passwordHash,
-  });
+  // Update the user's role and status
+  await db.update(user)
+    .set({
+      role: SUPER_ADMIN.role,
+      status: SUPER_ADMIN.status,
+    })
+    .where(eq(user.email, SUPER_ADMIN.email));
 
   console.log(`Seeded super-admin: ${SUPER_ADMIN.email}`);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
@@ -33,7 +33,7 @@ export default function ProvincesPage() {
   const [creating, setCreating] = useState(false);
   const [formMsg, setFormMsg] = useState("");
 
-  async function loadProvinces() {
+  const loadProvinces = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (search) params.set("search", search);
@@ -45,9 +45,9 @@ export default function ProvincesPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, search, statusFilter]);
 
-  useEffect(() => { loadProvinces(); }, [page, search, statusFilter]);
+  useEffect(() => { loadProvinces(); }, [loadProvinces]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

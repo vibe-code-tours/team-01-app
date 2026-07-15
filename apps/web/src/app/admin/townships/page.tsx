@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
@@ -43,14 +43,14 @@ export default function TownshipsPage() {
   const [creating, setCreating] = useState(false);
   const [createMsg, setCreateMsg] = useState("");
 
-  async function loadProvincesList() {
+  const loadProvincesList = useCallback(async () => {
     const result = await adminFetch<{ provinces: Province[] }>("/provinces?limit=100");
     if (result.success && result.data) {
       setProvinces(result.data.provinces);
     }
-  }
+  }, []);
 
-  async function loadTownships() {
+  const loadTownships = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (search) params.set("search", search);
@@ -63,15 +63,15 @@ export default function TownshipsPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, search, statusFilter, provinceFilter]);
 
   useEffect(() => {
     loadProvincesList();
-  }, []);
+  }, [loadProvincesList]);
 
   useEffect(() => {
     loadTownships();
-  }, [page, search, statusFilter, provinceFilter]);
+  }, [loadTownships]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

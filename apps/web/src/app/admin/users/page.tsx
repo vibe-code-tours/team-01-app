@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
 import { UserTable } from "@/components/admin/UserTable";
@@ -41,7 +41,7 @@ export default function UsersPage() {
   const [formMsg, setFormMsg] = useState("");
   const [formSuccess, setFormSuccess] = useState(false);
 
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (search) params.set("search", search);
@@ -54,11 +54,11 @@ export default function UsersPage() {
       setPagination(data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, search, roleFilter]);
 
   useEffect(() => {
     loadUsers();
-  }, [page, search, roleFilter]);
+  }, [loadUsers]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
