@@ -225,9 +225,40 @@ routes.patch("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
         couponsRemaining: details.couponCount,
         expiresAt,
       });
+
+      try {
+        const { createAndEmitNotification } = await import("../lib/notifications.js");
+        await createAndEmitNotification({
+          userId: existing.userId,
+          type: "subscription_approved",
+          title: "Subscription Approved",
+          message: `Your subscription order has been approved. You now have ${details.couponCount} delivery coupons.`,
+          entityType: "subscription",
+          entityId: id,
+          link: `/subscriptions`,
+        });
+      } catch { /* best-effort */ }
     } catch (e) {
       console.error("Failed to create subscription on approval:", e);
     }
+  }
+
+  // Notify user of status change (for non-subscription or other status changes)
+  if (status && !(status === "approved" && existing.orderType === "subscription")) {
+    try {
+      const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+      const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+      await createAndEmitNotification({
+        userId: existing.userId,
+        type: "order_status_changed",
+        title: `Order ${statusLabel}`,
+        message: `Your order status has been updated to "${status}".`,
+        entityType: "order",
+        entityId: id,
+        link: `/orders/${id}`,
+      });
+      broadcastToAdmins("order:status-changed", { orderId: id, status });
+    } catch { /* best-effort */ }
   }
 
   return c.json({ success: true, data: updated });

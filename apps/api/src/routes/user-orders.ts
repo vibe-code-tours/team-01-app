@@ -80,6 +80,23 @@ routes.post("/user/orders", async (c) => {
     });
   }
 
+  // Send notifications
+  try {
+    const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+    await createAndEmitNotification({
+      userId: currentUser.id,
+      type: "order_created",
+      title: "Order Created",
+      message: `Your order #${order.id.slice(0, 8)} has been created successfully.`,
+      entityType: "order",
+      entityId: order.id,
+      link: `/orders/${order.id}`,
+    });
+    broadcastToAdmins("order:new", { orderId: order.id });
+  } catch {
+    // Notifications are best-effort
+  }
+
   return c.json({ success: true, data: order }, 201);
 });
 
@@ -250,6 +267,22 @@ routes.patch("/user/orders/:id", async (c) => {
       .update(orders)
       .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(orders.id, id));
+
+    // Notify cancellation
+    try {
+      const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+      await createAndEmitNotification({
+        userId: currentUser.id,
+        type: "order_status_changed",
+        title: "Order Cancelled",
+        message: `Your order has been cancelled.`,
+        entityType: "order",
+        entityId: id,
+        link: `/orders/${id}`,
+      });
+      broadcastToAdmins("order:status-changed", { orderId: id, status: "cancelled" });
+    } catch { /* best-effort */ }
+
     return c.json({ success: true, data: { id, status: "cancelled" } });
   }
 
@@ -269,6 +302,21 @@ routes.patch("/user/orders/:id", async (c) => {
       .update(orders)
       .set({ status: "paid", updatedAt: new Date() })
       .where(eq(orders.id, id));
+
+    try {
+      const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+      await createAndEmitNotification({
+        userId: currentUser.id,
+        type: "order_status_changed",
+        title: "Payment Confirmed",
+        message: `Your order payment has been confirmed. Your order is now being reviewed.`,
+        entityType: "order",
+        entityId: id,
+        link: `/orders/${id}`,
+      });
+      broadcastToAdmins("order:status-changed", { orderId: id, status: "paid" });
+    } catch { /* best-effort */ }
+
     return c.json({ success: true, data: { id, status: "paid" } });
   }
 
@@ -415,6 +463,20 @@ routes.post("/user/orders/:orderId/schedule", async (c) => {
     .update(orders)
     .set({ status: "scheduled", updatedAt: new Date() })
     .where(eq(orders.id, orderId));
+
+  try {
+    const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+    await createAndEmitNotification({
+      userId: currentUser.id,
+      type: "order_status_changed",
+      title: "Delivery Scheduled",
+      message: `Your delivery has been scheduled successfully.`,
+      entityType: "order",
+      entityId: orderId,
+      link: `/orders/${orderId}`,
+    });
+    broadcastToAdmins("order:status-changed", { orderId, status: "scheduled" });
+  } catch { /* best-effort */ }
 
   return c.json({ success: true, data: { orderId, scheduleId } }, 201);
 });

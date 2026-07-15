@@ -36,6 +36,10 @@ export const setupSocketIO = (io: SocketIOServer) => {
 
     socket.join(`user:${user.sub}`);
 
+    if (user.role === "admin" || user.role === "super-admin") {
+      socket.join("admins");
+    }
+
     socket.on("disconnect", () => {
       console.log(`[Socket.IO] User ${user.email} disconnected (${socket.id})`);
     });
