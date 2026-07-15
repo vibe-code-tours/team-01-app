@@ -5,9 +5,13 @@ WORKDIR /app
 
 # Copy workspace root files
 COPY package.json package-lock.json ./
+COPY tsconfig.json ./
 COPY apps/api/package.json ./apps/api/
+COPY apps/api/tsconfig.json ./apps/api/
 COPY packages/db/package.json ./packages/db/
+COPY packages/db/tsconfig.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/tsconfig.json ./packages/shared/
 RUN npm ci
 
 # Copy source
