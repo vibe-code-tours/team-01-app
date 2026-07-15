@@ -19,17 +19,19 @@ import { publicRoutes } from "./routes/public.js";
 import { userRoutes } from "./routes/user.js";
 import { userOrderRoutes } from "./routes/user-orders.js";
 import { userCouponDeliveryRoutes } from "./routes/user-coupon-deliveries.js";
+import { notificationRoutes } from "./routes/notifications.js";
 import { auth } from "./lib/auth.js";
 import { errorHandler } from "./middleware/error.js";
 import { setupSocketIO } from "./ws/index.js";
+import { setIO } from "./lib/io.js";
 
 const app = new Hono();
 
 app.use("*", logger());
 app.use("*", cors({ origin: env.API_CORS_ORIGIN, credentials: true }));
 
-// better-auth catch-all handler
-app.on(["POST", "GET"], "/api/auth/**", (c) => {
+// better-auth handler — must run before route-level auth middleware
+app.use("/api/auth/*", async (c) => {
   return auth.handler(c.req.raw);
 });
 
@@ -91,6 +93,7 @@ app.route("/api", publicRoutes);
 app.route("/api", userRoutes);
 app.route("/api", userOrderRoutes);
 app.route("/api", userCouponDeliveryRoutes);
+app.route("/api", notificationRoutes);
 
 app.onError(errorHandler);
 
@@ -104,6 +107,7 @@ const io = new SocketIOServer(httpServer as HttpServer, {
 });
 
 setupSocketIO(io);
+setIO(io);
 
 console.log(`API server running on port ${env.API_PORT}`);
 console.log(`Socket.IO server ready`);

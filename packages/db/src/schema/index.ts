@@ -6,3 +6,4 @@ export * from "./subscriptions";
 export * from "./locations";
 export * from "./schedules";
 export * from "./delivery";
+export * from "./notifications";

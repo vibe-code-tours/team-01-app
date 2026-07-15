@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
@@ -33,12 +33,6 @@ function getThumbnailSrc(imageUrl: string | null): string {
     return `/api${base}_thumb.${ext}`;
   }
   return imageUrl;
-}
-
-function getImageSrc(url: string | null): string {
-  if (!url) return "";
-  if (url.startsWith("/")) return `/api${url}`;
-  return url;
 }
 
 export default function ProductsPage() {
@@ -74,7 +68,7 @@ export default function ProductsPage() {
     };
   }, [search]);
 
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (debouncedSearch) params.set("search", debouncedSearch);
@@ -90,11 +84,11 @@ export default function ProductsPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, debouncedSearch, typeFilter, statusFilter]);
 
   useEffect(() => {
     loadProducts();
-  }, [page, debouncedSearch, typeFilter, statusFilter]);
+  }, [loadProducts]);
 
   function toggleCreateForm() {
     const next = !showCreate;

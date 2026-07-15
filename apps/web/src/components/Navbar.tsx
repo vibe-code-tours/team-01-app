@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "./ThemeToggle";
+import { NotificationBell } from "./NotificationBell";
 import { useCart } from "@/lib/cart-context";
 import { fetchSession, signOut } from "@/lib/api-client";
 
@@ -123,6 +124,9 @@ export function Navbar() {
               </span>
             )}
           </div>
+
+          {/* Notifications */}
+          {user && <NotificationBell scrolled={scrolled} />}
 
           {/* User menu or Login */}
           {user ? (

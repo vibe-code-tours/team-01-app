@@ -185,6 +185,20 @@ routes.post("/user/coupon-deliveries", async (c) => {
     return order;
   });
 
+  try {
+    const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+    await createAndEmitNotification({
+      userId: currentUser.id,
+      type: "delivery_created",
+      title: "Delivery Scheduled",
+      message: `Your delivery of ${bottleCount} bottle(s) has been scheduled.`,
+      entityType: "delivery",
+      entityId: result.id,
+      link: `/coupon-deliveries/${result.id}`,
+    });
+    broadcastToAdmins("delivery:new", { orderId: result.id, bottleCount });
+  } catch { /* best-effort */ }
+
   return c.json({ success: true, data: result }, 201);
 });
 
@@ -260,6 +274,20 @@ routes.patch("/user/coupon-deliveries/:id", async (c) => {
       .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(orders.id, id));
   });
+
+  try {
+    const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+    await createAndEmitNotification({
+      userId: currentUser.id,
+      type: "delivery_status_changed",
+      title: "Delivery Cancelled",
+      message: `Your delivery has been cancelled. Coupons have been returned.`,
+      entityType: "delivery",
+      entityId: id,
+      link: `/coupon-deliveries/${id}`,
+    });
+    broadcastToAdmins("delivery:status-changed", { orderId: id, status: "cancelled" });
+  } catch { /* best-effort */ }
 
   return c.json({ success: true, data: { id, status: "cancelled" } });
 });

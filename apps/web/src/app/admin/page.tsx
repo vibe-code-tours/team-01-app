@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import type { Socket } from "socket.io-client";
 import { adminFetch } from "@/lib/api-client";
 import { StatCard } from "@/components/admin/StatCard";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { getSocket, onSocketReady } from "@/lib/socket";
 
 interface Stats {
   totalUsers: number;
@@ -41,6 +43,48 @@ export default function AdminDashboard() {
     }
     load();
   }, []);
+
+  const refreshStats = useCallback(async () => {
+    const result = await adminFetch<Stats>("/stats");
+    if (result.success && result.data) {
+      setStats(result.data);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+    let mounted = true;
+    let attached = false;
+
+    function attach(socket: Socket) {
+      if (attached) return;
+      attached = true;
+      socket.on("order:new", refreshStats);
+      socket.on("order:status-changed", refreshStats);
+      socket.on("delivery:new", refreshStats);
+      socket.on("delivery:status-changed", refreshStats);
+      cleanup = () => {
+        socket.off("order:new", refreshStats);
+        socket.off("order:status-changed", refreshStats);
+        socket.off("delivery:new", refreshStats);
+        socket.off("delivery:status-changed", refreshStats);
+      };
+    }
+
+    const socket = getSocket();
+    if (socket) {
+      attach(socket);
+    } else {
+      const unsubscribe = onSocketReady(() => {
+        if (!mounted) return;
+        const s = getSocket();
+        if (s) attach(s);
+      });
+      cleanup = () => { unsubscribe(); };
+    }
+
+    return () => { mounted = false; cleanup?.(); };
+  }, [refreshStats]);
 
   if (loading) {
     return (

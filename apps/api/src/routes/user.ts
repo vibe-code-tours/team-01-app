@@ -141,6 +141,20 @@ routes.post("/user/subscriptions/purchase", async (c) => {
     })
     .returning();
 
+  try {
+    const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+    await createAndEmitNotification({
+      userId: currentUser.id,
+      type: "subscription_purchased",
+      title: "Subscription Order Created",
+      message: `Your subscription order for "${pkg.name}" has been created. Please complete payment.`,
+      entityType: "subscription",
+      entityId: order.id,
+      link: `/orders/${order.id}`,
+    });
+    broadcastToAdmins("order:new", { orderId: order.id, type: "subscription" });
+  } catch { /* best-effort */ }
+
   return c.json({ success: true, data: { orderId: order.id, status: order.status } }, 201);
 });
 
