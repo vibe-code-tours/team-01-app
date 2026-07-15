@@ -25,6 +25,10 @@ import { errorHandler } from "./middleware/error.js";
 import { setupSocketIO } from "./ws/index.js";
 import { setIO } from "./lib/io.js";
 
+// Ensure upload directories exist (needed for persistent volumes)
+fs.mkdirSync(path.join(process.cwd(), "apps/api/uploads/products"), { recursive: true });
+fs.mkdirSync(path.join(process.cwd(), "apps/api/uploads/payments"), { recursive: true });
+
 const app = new Hono();
 
 app.use("*", logger());
