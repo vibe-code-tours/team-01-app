@@ -4,11 +4,11 @@ WORKDIR /app
 
 # ── Dependencies ────────────────────────────────────────
 FROM base AS deps
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
-RUN npm install
+RUN npm ci
 
 # ── Production build ────────────────────────────────────
 FROM base AS builder
