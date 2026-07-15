@@ -1,55 +1,36 @@
-FROM node:22-alpine AS base
+# ── Build ────────────────────────────────────────────────
+FROM node:22-alpine AS builder
 WORKDIR /app
 
-# ── Dependencies ──────────────────────────────────────
-FROM base AS deps
-COPY package.json package-lock.json* ./
+# Copy workspace root files
+COPY package.json package-lock.json ./
 COPY apps/api/package.json ./apps/api/
-COPY apps/web/package.json ./apps/web/
 COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
-RUN npm install
+RUN npm ci
 
-# ── API ───────────────────────────────────────────────
-FROM base AS api-dev
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-EXPOSE 3001
-CMD ["npx", "tsx", "watch", "apps/api/src/index.ts"]
-
-FROM base AS api-prod
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source
 COPY apps/api ./apps/api
 COPY packages/shared ./packages/shared
 COPY packages/db ./packages/db
-COPY package.json ./
-RUN npm run build --workspace=@water-delivery/shared
-EXPOSE 3001
-CMD ["node", "--import", "tsx", "apps/api/src/index.ts"]
 
-# ── Web ───────────────────────────────────────────────
-FROM base AS web-dev
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-WORKDIR /app/apps/web
-EXPOSE 3000
-CMD ["npx", "next", "dev", "--port", "3000"]
-
-FROM base AS web-build
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-WORKDIR /app
 RUN npm run build --workspace=@water-delivery/shared && \
-    npm run build --workspace=@water-delivery/web
+    npm run build --workspace=@water-delivery/db && \
+    npm run build --workspace=@water-delivery/api
 
-FROM base AS web-prod
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=web-build /app/apps/web/.next ./apps/web/.next
-COPY --from=web-build /app/apps/web/next.config.ts ./apps/web/
-COPY --from=web-build /app/apps/web/package.json ./apps/web/
-COPY --from=web-build /app/packages/shared ./packages/shared
-COPY --from=web-build /app/packages/db ./packages/db
-COPY --from=web-build /app/package.json ./
-WORKDIR /app/apps/web
-EXPOSE 3000
-CMD ["npx", "next", "start", "-p", "3000"]
+# ── Production ──────────────────────────────────────────
+FROM node:22-alpine
+ENV NODE_ENV=production
+WORKDIR /app
+
+COPY package.json ./
+COPY apps/api/package.json ./apps/api/
+COPY packages/db/package.json ./packages/db/
+COPY packages/shared/package.json ./packages/shared/
+COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/packages/db/dist ./packages/db/dist
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 3001
+CMD ["node", "apps/api/dist/index.js"]
