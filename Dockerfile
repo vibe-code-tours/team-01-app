@@ -1,25 +1,18 @@
-# ── Production ──────────────────────────────────────────
 FROM node:22-alpine
+
+RUN apk add --no-cache bash
+
 ENV NODE_ENV=production
 FROM node:22-alpine AS base
 RUN apk add --no-cache bash
 WORKDIR /app
 
-# Copy workspace root files
-COPY package.json package-lock.json ./
-COPY tsconfig.json ./
-COPY apps/api/package.json ./apps/api/
-COPY apps/api/tsconfig.json ./apps/api/
-COPY packages/db/package.json ./packages/db/
-COPY packages/db/tsconfig.json ./packages/db/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/shared/tsconfig.json ./packages/shared/
+# Copy the entire monorepo
+COPY . .
+
+# Install all workspace dependencies
 RUN npm ci
 
-# Copy source
-COPY apps/api ./apps/api
-COPY packages/shared ./packages/shared
-COPY packages/db ./packages/db
-
 EXPOSE 3001
+
 CMD ["node", "--import", "tsx", "apps/api/src/index.ts"]
