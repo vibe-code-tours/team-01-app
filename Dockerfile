@@ -3,10 +3,10 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy workspace root files
-COPY package.json package-lock.json ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/db/package.json ./packages/db/
-COPY packages/shared/package.json ./packages/shared/
+COPY package.json package-lock.json tsconfig.json ./
+COPY apps/api/package.json apps/api/tsconfig.json ./apps/api/
+COPY packages/db/package.json packages/db/tsconfig.json ./packages/db/
+COPY packages/shared/package.json packages/shared/tsconfig.json ./packages/shared/
 RUN npm ci
 
 # Copy source
