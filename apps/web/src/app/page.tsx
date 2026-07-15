@@ -1,58 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { publicFetch } from "@/lib/api-client";
 
-const products = [
-  {
-    id: "1",
-    name: "350ml Water",
-    description: "Perfect for on-the-go. Compact and refreshing.",
-    price: 5000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "2",
-    name: "500ml Water",
-    description: "Ideal for daily hydration. Great for office and home.",
-    price: 7000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "3",
-    name: "1L Water",
-    description: "Family size. Perfect for meals and gatherings.",
-    price: 10000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "4",
-    name: "1.5L Water",
-    description: "Extra capacity for active families and events.",
-    price: 13000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "5",
-    name: "Water Pump",
-    description: "Easy-to-use dispenser pump for 20L bottles.",
-    price: 15000,
-    packSize: "1 unit",
-    category: "dispensers",
-  },
-  {
-    id: "6",
-    name: "Stainless Bottle",
-    description: "Durable, BPA-free. Available in 500ml and 1L.",
-    price: 20000,
-    packSize: "Various sizes",
-    category: "accessories",
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: string;
+  type: string;
+  packSize: string | null;
+  imageUrl: string | null;
+}
+
+const categoryMap: Record<string, string> = {
+  bottle: "bottles",
+  pump: "dispensers",
+  retail: "retail",
+};
+
+function getImageSrc(url: string | null): string {
+  if (!url) return "";
+  if (url.startsWith("/")) return `/api${url}`;
+  return url;
+}
 
 const features = [
   {
@@ -158,22 +130,35 @@ const features = [
   },
 ];
 
-const tabs = ["All", "Bottles", "Dispensers", "Accessories"];
+const tabs = ["All", "Bottles", "Dispensers", "Retail"];
 
-function formatPrice(price: number) {
+function formatPrice(price: string) {
   return new Intl.NumberFormat("en-US", {
     style: "decimal",
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(Number(price));
 }
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const result = await publicFetch<{ products: Product[] }>("/products?limit=50");
+      if (result.success && result.data) {
+        setProducts(result.data.products.filter((p) => p.status === "active"));
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   const filtered =
     activeTab === "All"
       ? products
-      : products.filter((p) => p.category === activeTab.toLowerCase());
+      : products.filter((p) => categoryMap[p.type] === activeTab.toLowerCase());
 
   return (
     <>
@@ -305,53 +290,71 @@ export default function HomePage() {
           </div>
           {/* Product grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
-            {filtered.map((product) => (
-              <div
-                key={product.id}
-                className="bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 animate-fade-in-up"
-              >
-                <div className="h-40 bg-gradient-to-br from-primary/5 to-cyan-600/5 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-10 w-10 text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-base-content">
-                        {product.name}
-                      </h3>
-                      <p className="text-sm text-base-content/50 mt-1">
-                        {product.description}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-base-200/50">
-                    <span className="text-xs font-medium text-base-content/40 bg-base-200/50 px-2 py-1 rounded-md">
-                      {product.packSize}
-                    </span>
-                    <span className="font-bold text-primary">
-                      {formatPrice(product.price)} MMK
-                    </span>
-                  </div>
-                  <Link
-                    href="/subscription"
-                    className="btn btn-primary btn-sm w-full mt-4"
-                  >
-                    Order Now
-                  </Link>
-                </div>
+            {loading ? (
+              <div className="col-span-full flex justify-center py-12">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
               </div>
-            ))}
+            ) : filtered.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <p className="text-base-content/50">No products found</p>
+              </div>
+            ) : (
+              filtered.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 animate-fade-in-up"
+                >
+                  <div className="h-40 bg-gradient-to-br from-primary/5 to-cyan-600/5 flex items-center justify-center">
+                    {product.imageUrl ? (
+                      <img
+                        src={getImageSrc(product.imageUrl)}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-10 w-10 text-primary"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                        >
+                          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-base-content">
+                          {product.name}
+                        </h3>
+                        <p className="text-sm text-base-content/50 mt-1">
+                          {product.description}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-base-200/50">
+                      <span className="text-xs font-medium text-base-content/40 bg-base-200/50 px-2 py-1 rounded-md">
+                        {product.packSize}
+                      </span>
+                      <span className="font-bold text-primary">
+                        {formatPrice(product.price)} MMK
+                      </span>
+                    </div>
+                    <Link
+                      href="/subscription"
+                      className="btn btn-primary btn-sm w-full mt-4"
+                    >
+                      Order Now
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
           <div className="text-center mt-10">
             <Link href="/products" className="btn btn-outline btn-primary">
