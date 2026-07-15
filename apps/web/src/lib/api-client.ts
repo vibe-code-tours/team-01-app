@@ -53,7 +53,9 @@ export async function publicFetch<T = unknown>(
     credentials: "include",
     ...options,
   });
-  return res.json();
+  const text = await res.text();
+  if (!text) return { success: false, error: "Empty response" };
+  return JSON.parse(text);
 }
 
 export async function userFetch<T = unknown>(
@@ -64,7 +66,9 @@ export async function userFetch<T = unknown>(
     credentials: "include",
     ...options,
   });
-  return res.json();
+  const text = await res.text();
+  if (!text) return { success: false, error: "Empty response" };
+  return JSON.parse(text);
 }
 
 export async function adminFetch<T = unknown>(
@@ -75,5 +79,7 @@ export async function adminFetch<T = unknown>(
     credentials: "include",
     ...options,
   });
-  return res.json();
+  const text = await res.text();
+  if (!text) return { success: false, error: "Empty response" };
+  return JSON.parse(text);
 }

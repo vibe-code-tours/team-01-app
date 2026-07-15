@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import type { Socket } from "socket.io-client";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { getSocket, onSocketReady } from "@/lib/socket";
 
 interface Order {
   id: string;
@@ -54,6 +56,43 @@ export default function OrdersPage() {
   useEffect(() => {
     loadOrders();
   }, [page, statusFilter, typeFilter]);
+
+  const stableLoadOrders = useCallback(() => { loadOrders(); }, [page, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+    let mounted = true;
+    let attached = false;
+
+    function attach(socket: Socket) {
+      if (attached) return;
+      attached = true;
+      socket.on("order:new", stableLoadOrders);
+      socket.on("order:status-changed", stableLoadOrders);
+      socket.on("delivery:new", stableLoadOrders);
+      socket.on("delivery:status-changed", stableLoadOrders);
+      cleanup = () => {
+        socket.off("order:new", stableLoadOrders);
+        socket.off("order:status-changed", stableLoadOrders);
+        socket.off("delivery:new", stableLoadOrders);
+        socket.off("delivery:status-changed", stableLoadOrders);
+      };
+    }
+
+    const socket = getSocket();
+    if (socket) {
+      attach(socket);
+    } else {
+      const unsubscribe = onSocketReady(() => {
+        if (!mounted) return;
+        const s = getSocket();
+        if (s) attach(s);
+      });
+      cleanup = () => { unsubscribe(); };
+    }
+
+    return () => { mounted = false; cleanup?.(); };
+  }, [stableLoadOrders]);
 
   return (
     <div className="animate-fade-in">
