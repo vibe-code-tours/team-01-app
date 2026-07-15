@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { adminFetch } from "@/lib/api-client";
 
-interface Province { id: string; name: string; }
 interface Township { id: string; name: string; }
 interface Schedule {
   id: string;

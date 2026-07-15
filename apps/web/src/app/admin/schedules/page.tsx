@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
@@ -45,19 +45,19 @@ export default function SchedulesPage() {
   const [creating, setCreating] = useState(false);
   const [formMsg, setFormMsg] = useState("");
 
-  async function loadProvincesList() {
+  const loadProvincesList = useCallback(async () => {
     const result = await adminFetch<{ provinces: Province[] }>("/provinces?limit=100");
     if (result.success && result.data) setProvinces(result.data.provinces);
-  }
+  }, []);
 
-  async function loadTownshipsForProvince(provinceId: string, target: "filter" | "form") {
+  const loadTownshipsForProvince = useCallback(async (provinceId: string, target: "filter" | "form") => {
     if (!provinceId) { if (target === "filter") setFilterTownships([]); else setFormTownships([]); return; }
     const result = await adminFetch<Township[]>(`/townships-by-province/${provinceId}`);
     const list = result.success && result.data ? result.data : [];
     if (target === "filter") setFilterTownships(list); else setFormTownships(list);
-  }
+  }, []);
 
-  async function loadSchedules() {
+  const loadSchedules = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (provinceFilter) params.set("provinceId", provinceFilter);
@@ -70,20 +70,20 @@ export default function SchedulesPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, provinceFilter, dateFilter, townshipFilter]);
 
-  useEffect(() => { loadProvincesList(); }, []);
-  useEffect(() => { loadSchedules(); }, [page, provinceFilter, dateFilter, townshipFilter]);
+  useEffect(() => { loadProvincesList(); }, [loadProvincesList]);
+  useEffect(() => { loadSchedules(); }, [loadSchedules]);
 
   useEffect(() => {
     loadTownshipsForProvince(provinceFilter, "filter");
     setTownshipFilter("");
-  }, [provinceFilter]);
+  }, [provinceFilter, loadTownshipsForProvince]);
 
   useEffect(() => {
     loadTownshipsForProvince(formProvinceId, "form");
     setFormTownshipIds([]);
-  }, [formProvinceId]);
+  }, [formProvinceId, loadTownshipsForProvince]);
 
   function toggleCreateForm() {
     const next = !showCreate;

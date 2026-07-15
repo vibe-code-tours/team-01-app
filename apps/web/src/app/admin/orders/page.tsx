@@ -39,7 +39,7 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (statusFilter) params.set("status", statusFilter);
@@ -51,13 +51,11 @@ export default function OrdersPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, statusFilter, typeFilter]);
 
   useEffect(() => {
     loadOrders();
-  }, [page, statusFilter, typeFilter]);
-
-  const stableLoadOrders = useCallback(() => { loadOrders(); }, [page, statusFilter, typeFilter]);
+  }, [loadOrders]);
 
   useEffect(() => {
     let cleanup: (() => void) | null = null;
@@ -67,15 +65,15 @@ export default function OrdersPage() {
     function attach(socket: Socket) {
       if (attached) return;
       attached = true;
-      socket.on("order:new", stableLoadOrders);
-      socket.on("order:status-changed", stableLoadOrders);
-      socket.on("delivery:new", stableLoadOrders);
-      socket.on("delivery:status-changed", stableLoadOrders);
+      socket.on("order:new", loadOrders);
+      socket.on("order:status-changed", loadOrders);
+      socket.on("delivery:new", loadOrders);
+      socket.on("delivery:status-changed", loadOrders);
       cleanup = () => {
-        socket.off("order:new", stableLoadOrders);
-        socket.off("order:status-changed", stableLoadOrders);
-        socket.off("delivery:new", stableLoadOrders);
-        socket.off("delivery:status-changed", stableLoadOrders);
+        socket.off("order:new", loadOrders);
+        socket.off("order:status-changed", loadOrders);
+        socket.off("delivery:new", loadOrders);
+        socket.off("delivery:status-changed", loadOrders);
       };
     }
 
@@ -92,7 +90,7 @@ export default function OrdersPage() {
     }
 
     return () => { mounted = false; cleanup?.(); };
-  }, [stableLoadOrders]);
+  }, [loadOrders]);
 
   return (
     <div className="animate-fade-in">

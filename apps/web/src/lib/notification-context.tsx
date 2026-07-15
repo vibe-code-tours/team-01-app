@@ -11,7 +11,7 @@ import {
 } from "react";
 import type { Socket } from "socket.io-client";
 import { userFetch } from "@/lib/api-client";
-import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
+import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { ToastContainer } from "@/components/Toast";
 
 interface Notification {

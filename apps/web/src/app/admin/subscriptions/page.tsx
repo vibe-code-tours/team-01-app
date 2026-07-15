@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
@@ -32,7 +32,7 @@ export default function SubscriptionsPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  async function loadSubscriptions() {
+  const loadSubscriptions = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "10" });
     if (statusFilter) params.set("status", statusFilter);
@@ -43,11 +43,11 @@ export default function SubscriptionsPage() {
       setPagination(result.data.pagination);
     }
     setLoading(false);
-  }
+  }, [page, statusFilter]);
 
   useEffect(() => {
     loadSubscriptions();
-  }, [page, statusFilter]);
+  }, [loadSubscriptions]);
 
   return (
     <div className="animate-fade-in">

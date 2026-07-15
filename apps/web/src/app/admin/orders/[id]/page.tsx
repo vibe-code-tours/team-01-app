@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { adminFetch } from "@/lib/api-client";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -76,7 +76,7 @@ export default function OrderDetailPage() {
   const isCouponDelivery = order?.orderType === "coupon-delivery";
   const statuses = isCouponDelivery ? COUPON_STATUSES : RETAIL_STATUSES;
 
-  async function loadOrder() {
+  const loadOrder = useCallback(async () => {
     const result = await adminFetch<OrderDetail>(`/orders/${id}`);
     if (result.success && result.data) {
       const o = result.data;
@@ -85,19 +85,19 @@ export default function OrderDetailPage() {
       setAdminNotes(o.adminNotes || "");
     }
     setLoading(false);
-  }
+  }, [id]);
 
-  async function loadDeliveryPersons() {
+  const loadDeliveryPersons = useCallback(async () => {
     const result = await adminFetch<DeliveryPerson[]>("/delivery-persons");
     if (result.success && result.data) {
       setDeliveryPersons(result.data);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadOrder();
     loadDeliveryPersons();
-  }, [id]);
+  }, [loadOrder, loadDeliveryPersons]);
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
