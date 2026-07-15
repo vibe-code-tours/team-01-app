@@ -1,16 +1,7 @@
 {
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "water-delivery-system-prod.vercel.app"
-        }
-      ],
-      "destination": "https://water-delivery-system-api.vercel.app/api/:path*"
-    }
-  ]
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "ignoreCommand": "echo 'Skipping build for unused files'"
 }

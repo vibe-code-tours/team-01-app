@@ -90,7 +90,7 @@ jobs:
           echo "**${IMAGE_URL}**" >> $GITHUB_STEP_SUMMARY
 
   vercel-deploy:
-    needs: [ci, vercel-deploy-api]
+    needs: ci
     runs-on: ubuntu-latest
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
@@ -119,14 +119,8 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
-      - name: Set API_URL env var from deployed API
-        run: |
-          API_URL="${{ needs.vercel-deploy-api.outputs.url }}"
-          echo "Setting API_URL=$API_URL in web app"
-          cd apps/web
-          vercel link --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops
-          echo "$API_URL" | vercel env add API_URL production --yes --token=${{ secrets.VERCEL_TOKEN }}
-          echo "$API_URL" | vercel env add API_URL preview --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Link Vercel project
+        run: cd apps/web && vercel link --yes --token=${{ secrets.VERCEL_TOKEN }} --scope klockdevops
 
       - name: Deploy to Vercel (production)
         id: deploy-prod
