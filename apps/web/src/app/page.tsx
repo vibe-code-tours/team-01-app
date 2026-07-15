@@ -1,58 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { publicFetch } from "@/lib/api-client";
 
-const products = [
-  {
-    id: "1",
-    name: "350ml Water",
-    description: "Perfect for on-the-go. Compact and refreshing.",
-    price: 5000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "2",
-    name: "500ml Water",
-    description: "Ideal for daily hydration. Great for office and home.",
-    price: 7000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "3",
-    name: "1L Water",
-    description: "Family size. Perfect for meals and gatherings.",
-    price: 10000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "4",
-    name: "1.5L Water",
-    description: "Extra capacity for active families and events.",
-    price: 13000,
-    packSize: "12 bottles",
-    category: "bottles",
-  },
-  {
-    id: "5",
-    name: "Water Pump",
-    description: "Easy-to-use dispenser pump for 20L bottles.",
-    price: 15000,
-    packSize: "1 unit",
-    category: "dispensers",
-  },
-  {
-    id: "6",
-    name: "Stainless Bottle",
-    description: "Durable, BPA-free. Available in 500ml and 1L.",
-    price: 20000,
-    packSize: "Various sizes",
-    category: "accessories",
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: string;
+  type: string;
+  packSize: string | null;
+  imageUrl: string | null;
+  status: string;
+}
+
+const categoryMap: Record<string, string> = {
+  bottle: "bottles",
+  pump: "dispensers",
+  retail: "retail",
+};
+
+function getImageSrc(url: string | null): string {
+  if (!url) return "";
+  if (url.startsWith("/")) return `/api${url}`;
+  return url;
+}
 
 const features = [
   {
@@ -158,22 +131,35 @@ const features = [
   },
 ];
 
-const tabs = ["All", "Bottles", "Dispensers", "Accessories"];
+const tabs = ["All", "Bottles", "Dispensers", "Retail"];
 
-function formatPrice(price: number) {
+function formatPrice(price: string) {
   return new Intl.NumberFormat("en-US", {
     style: "decimal",
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(Number(price));
 }
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const result = await publicFetch<{ products: Product[] }>("/products?limit=6");
+      if (result.success && result.data) {
+        setProducts(result.data.products);
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   const filtered =
     activeTab === "All"
       ? products
-      : products.filter((p) => p.category === activeTab.toLowerCase());
+      : products.filter((p) => categoryMap[p.type] === activeTab.toLowerCase());
 
   return (
     <>
@@ -305,24 +291,42 @@ export default function HomePage() {
           </div>
           {/* Product grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
-            {filtered.map((product) => (
+            {loading && (
+              <div className="col-span-full flex justify-center py-12">
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+              </div>
+            )}
+            {!loading && filtered.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <p className="text-base-content/50">No products found</p>
+              </div>
+            )}
+            {!loading && filtered.map((product) => (
               <div
                 key={product.id}
                 className="bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 animate-fade-in-up"
               >
-                <div className="h-40 bg-gradient-to-br from-primary/5 to-cyan-600/5 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-10 w-10 text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                    </svg>
-                  </div>
+                <div className="h-48 bg-gradient-to-br from-primary/5 to-cyan-600/5 flex items-center justify-center overflow-hidden">
+                  {product.imageUrl ? (
+                    <img
+                      src={getImageSrc(product.imageUrl)}
+                      alt={product.name}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-10 w-10 text-primary"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      >
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
                 <div className="p-5">
                   <div className="flex items-start justify-between">

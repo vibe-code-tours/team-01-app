@@ -69,7 +69,7 @@ export function NotificationBell({ scrolled }: NotificationBellProps) {
         </svg>
         {unreadCount > 0 && (
           <span
-            className={`absolute -top-0.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold leading-none px-1 z-10 ${scrolled ? "bg-white text-primary" : "bg-black text-white"}`}
+            className={`absolute -top-0.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold leading-none px-1 z-10 ${scrolled ? "bg-white text-black" : "bg-black text-white"}`}
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
@@ -92,7 +92,10 @@ export function NotificationBell({ scrolled }: NotificationBellProps) {
               borderColor: "hsl(210, 100%, 88%)",
             }}
           >
-            <h3 className="font-semibold text-sm" style={{ color: "hsl(215, 25%, 15%)" }}>
+            <h3
+              className="font-semibold text-sm"
+              style={{ color: "hsl(215, 25%, 15%)" }}
+            >
               Notifications
             </h3>
             {unreadCount > 0 && (
