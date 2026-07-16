@@ -345,21 +345,72 @@ User uses subscription coupons to order 20L water bottles.
 - Client connects via `/api/socket-io/` (Next.js proxy → API server)
 - Auth: `auth: { token }` — session token from `GET /api/auth/socket-token`
 - Transport: polling (with upgrade attempt)
+- Reconnection: 10 attempts, 1s-5s delay, 10s timeout
+- Connection managed by `connectSocket()` / `getSocket()` / `onSocketReady()` in `apps/web/src/lib/socket.ts`
+
+### Rooms
+- `user:{userId}` — each user gets their own room (for personal notifications)
+- `admins` — all admin/super-admin users join this room (for order broadcasts)
+
+### Notification Types
+
+| Type | Description | Emitted When |
+|------|-------------|-------------|
+| `order_created` | New order placed | User creates retail/subscription order |
+| `order_status_changed` | Order status updated | Admin approves/rejects, user cancels/confirms, delivery completed |
+| `delivery_created` | Coupon delivery created | User creates coupon delivery |
+| `delivery_status_changed` | Delivery status updated | Admin assigns driver, delivery completed |
+| `subscription_purchased` | Subscription bought | User purchases subscription |
+| `subscription_approved` | Subscription approved | Admin approves subscription payment |
 
 ### Server Events
 
 | Event | Target | Payload | Trigger |
 |-------|--------|---------|---------|
 | `notification:new` | `user:{userId}` | Notification object | Any notification created |
-| `order:status-changed` | `user:{userId}` | `{ orderId }` | Order status changes |
+| `order:status-changed` | `user:{userId}` | `{ orderId }` | User's order status changes |
 | `order:new` | `admins` | `{ orderId, type }` | New order placed |
-| `order:status-changed` | `admins` | `{ orderId, status }` | Order status changes |
-| `delivery:new` | `admins` | `{ count }` | Orders assigned |
+| `order:status-changed` | `admins` | `{ orderId, status }` | Any order status changes |
+| `delivery:new` | `admins` | `{ count }` | Orders assigned in bulk |
 | `delivery:status-changed` | `admins` | `{ orderId, status }` | Delivery completed |
 
-### Rooms
-- `user:{userId}` — each user gets their own room
-- `admins` — all admin users join this room
+### Emission Points
+
+| Route | Event Emitted | Target |
+|-------|--------------|--------|
+| `POST /user/orders` | `order:new` | admins |
+| `PATCH /user/orders/:id` (confirm/cancel) | `order:status-changed` | user + admins |
+| `PATCH /admin/orders/:id` (approve/reject) | `order:status-changed` | user + admins |
+| `POST /admin/assignments/bulk` | `delivery:new` | admins |
+| `PATCH /admin/orders/:id/deliver` | `order:status-changed` | user + admins |
+| `POST /user/coupon-deliveries` | `delivery:new` | admins |
+| `POST /user/subscriptions/purchase` | `order:new` | admins |
+
+### Client-Side Behavior
+
+**Admin pages:**
+- `admin/layout.tsx` — listens for `order:new`, `order:status-changed` → shows toast notification
+- `admin/page.tsx` (dashboard) — listens for same events → refreshes stats
+- `admin/orders/page.tsx` — listens for same events → refreshes order list
+
+**User pages:**
+- `dashboard/page.tsx` — listens for `order:status-changed`, `delivery:status-changed` → refreshes order list
+- `orders/[id]/page.tsx` — listens for same events → refreshes order detail (only if orderId matches)
+- `NotificationBell` — shows unread count badge, marks as read on click
+
+### Flow Example: Admin Approves Order
+
+```
+1. Admin clicks "Approve" → PATCH /api/admin/orders/:id { status: "approved" }
+2. Backend updates DB status
+3. Backend creates notification (DB insert)
+4. Backend emits "notification:new" to user:{userId} room
+5. Backend emits "order:status-changed" to user:{userId} room
+6. Backend emits "order:status-changed" to admins room
+7. User's socket receives event → loadOrder() → page updates
+8. Admin's socket receives event → loadOrders() → list refreshes
+9. User's NotificationBell receives notification:new → badge count updates
+```
 
 ---
 
