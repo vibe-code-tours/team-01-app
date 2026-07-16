@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Water Delivery - Fresh Water Delivered to Your Door",
   description:
     "Subscribe to fresh water delivery. Choose from our selection of purified, mineral, and alkaline water products delivered on your schedule.",
+  icons: {
+    icon: "/favicon-32.png",
+  },
 };
 
 export default function RootLayout({

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { userFetch, fetchSession } from "@/lib/api-client";
+import type { Socket } from "socket.io-client";
+import { getSocket, onSocketReady, connectSocket } from "@/lib/socket";
 
 interface UserProfile {
   name: string;
@@ -93,6 +95,49 @@ export default function DashboardPage() {
   const [couponDeliveries, setCouponDeliveries] = useState<CouponDelivery[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const refreshOrders = useCallback(async () => {
+    const res = await userFetch<{ orders: Order[] }>("/orders?limit=5");
+    if (res.success && res.data) setOrders(res.data.orders || []);
+  }, []);
+
+  const refreshDeliveries = useCallback(async () => {
+    const res = await userFetch<{ deliveries: CouponDelivery[] }>("/coupon-deliveries?status=pending&limit=5");
+    if (res.success && res.data) setCouponDeliveries(res.data.deliveries || []);
+  }, []);
+
+  // Real-time updates via Socket.IO
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+    let mounted = true;
+    let attached = false;
+
+    function attach(socket: Socket) {
+      if (attached) return;
+      attached = true;
+      const onStatusChanged = () => { if (mounted) { refreshOrders(); refreshDeliveries(); } };
+      socket.on("order:status-changed", onStatusChanged);
+      socket.on("delivery:status-changed", onStatusChanged);
+      cleanup = () => {
+        socket.off("order:status-changed", onStatusChanged);
+        socket.off("delivery:status-changed", onStatusChanged);
+      };
+    }
+
+    const socket = getSocket();
+    if (socket) {
+      attach(socket);
+    } else {
+      const unsubscribe = onSocketReady(() => {
+        if (!mounted) return;
+        const s = getSocket();
+        if (s) attach(s);
+      });
+      cleanup = () => { unsubscribe(); };
+    }
+
+    return () => { mounted = false; cleanup?.(); };
+  }, [refreshOrders, refreshDeliveries]);
+
   useEffect(() => {
     async function init() {
       const session = await fetchSession();
@@ -100,6 +145,9 @@ export default function DashboardPage() {
         router.push("/login");
         return;
       }
+
+      // Ensure socket is connected for real-time updates
+      connectSocket();
 
       const [profileRes, subsRes, ordersRes, deliveriesRes] = await Promise.all([
         userFetch<UserProfile>("/profile"),

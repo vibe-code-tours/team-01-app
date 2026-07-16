@@ -26,6 +26,7 @@ async function proxyRequest(request: NextRequest, path: string) {
     method: request.method,
     headers,
     redirect: "manual",
+    cache: "no-store",
   };
 
   if (request.method !== "GET" && request.method !== "HEAD") {
@@ -39,6 +40,11 @@ async function proxyRequest(request: NextRequest, path: string) {
     status: apiRes.status,
     statusText: apiRes.statusText,
   });
+
+  // Prevent caching of API responses
+  response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
 
   apiRes.headers.forEach((value, key) => {
     const lower = key.toLowerCase();

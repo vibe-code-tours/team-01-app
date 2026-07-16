@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Yay Thal Pya Zat — Brand Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B2545; --deep:#13395E; --teal:#1C7293; --aqua:#2CA6A4;
+    --amber:#F2A65A; --ice:#F4F8FB; --ink:#132A3E; --muted:#6B8299; --line:#E2EBF2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ice);color:var(--ink);font-family:Inter,'Segoe UI',Arial,sans-serif;line-height:1.6}
+  .wrap{max-width:960px;margin:0 auto;padding:0 32px 80px}
+  header{background:var(--navy);color:#fff;padding:64px 32px 56px;margin-bottom:48px}
+  header .wrap{padding-bottom:0}
+  h1{font-family:Poppins,Inter,sans-serif;font-size:44px;margin:0 0 8px;letter-spacing:-.5px}
+  header p{color:#AFC4D6;margin:0;font-size:17px}
+  h2{font-family:Poppins,Inter,sans-serif;font-size:26px;margin:56px 0 4px;color:var(--navy)}
+  h2 .n{color:var(--amber);margin-right:10px}
+  .sub{color:var(--muted);margin:0 0 24px;font-size:15px}
+  h3{font-family:Poppins,Inter,sans-serif;font-size:16px;margin:28px 0 10px;color:var(--navy)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px;margin-bottom:16px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .swatch{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff}
+  .chip{height:92px}
+  .swatch .meta{padding:12px 14px}
+  .swatch b{display:block;font-size:14px}
+  .swatch code{font-size:12px;color:var(--muted);font-family:'SF Mono',Consolas,monospace}
+  table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th{background:var(--navy);color:#fff;text-align:left;padding:11px 14px;font-size:12px;letter-spacing:1px;text-transform:uppercase}
+  td{padding:11px 14px;border-top:1px solid var(--line);vertical-align:top}
+  code{background:#EDF3F8;padding:2px 6px;border-radius:5px;font-size:13px;font-family:'SF Mono',Consolas,monospace}
+  pre{background:var(--navy);color:#CFE0EC;padding:20px;border-radius:12px;overflow:auto;font-size:13px;line-height:1.55}
+  .ok{color:#1E7A46;font-weight:600}
+  .no{color:#B3261E;font-weight:600}
+  .pill{display:inline-block;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:600}
+  .note{background:#FFF4E6;border:1px solid #F6D9AF;border-radius:12px;padding:18px 22px;font-size:15px}
+  .dark{background:var(--navy);border-radius:14px;padding:28px;text-align:center}
+  .logobox{background:#fff;border:1px solid var(--line);border-radius:14px;padding:28px;text-align:center}
+  ul{padding-left:20px;margin:8px 0}
+  li{margin:5px 0}
+  .lead{font-size:18px;color:var(--deep)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div style="margin-bottom:24px">
+      <svg viewBox="0 0 420 96" width="330" height="76" xmlns="http://www.w3.org/2000/svg">
+        <defs><clipPath id="hd"><path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z"/></clipPath></defs>
+        <rect x="4" y="41" width="12" height="6" rx="3" fill="#F8C48F"/>
+        <rect x="0" y="55" width="18" height="6" rx="3" fill="#F2A65A"/>
+        <rect x="6" y="69" width="10" height="6" rx="3" fill="#E08E3C"/>
+        <path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z" fill="#FFFFFF"/>
+        <g clip-path="url(#hd)"><path d="M18 66 c8 0 8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 v40 H18 Z" fill="#2CA6A4"/></g>
+        <text x="108" y="48" font-family="Poppins,Inter,sans-serif" font-size="30" font-weight="700" fill="#FFFFFF" letter-spacing="-0.5">Yay Thal Pya Zat</text>
+        <text x="109" y="72" font-family="Inter,sans-serif" font-size="12.5" font-weight="600" fill="#2CA6A4" letter-spacing="3.2">WATER, DELIVERED</text>
+      </svg>
+    </div>
+    <h1>Brand Guide</h1>
+    <p>Version 1.0 · The rules that keep every screen, sticker and t-shirt looking like the same company.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="note">
+  <b>Fix these three things first — they cost you nothing and they're on your live site right now.</b>
+  <ul>
+    <li><b>The name is spelled two ways.</b> The site says <i>Yay Thal Pya Zat</i>; the system doc says <i>Yay Thel Pya Zat</i>. This guide uses <b>Yay Thal Pya Zat</b>. Search and replace everywhere — never mix them.</li>
+    <li><b>The footer still says "© 2026 WaterDelivery"</b> — leftover template text. Replace with <code>© 2026 Yay Thal Pya Zat</code>.</li>
+    <li><b>Prices show in <code>$</code></b> ($12 / $24 / $48) and plans are named Basic / Standard / Premium — but your system doc says Starter&nbsp;5 / Regular&nbsp;12 / Premium&nbsp;24 coupons. Pick one product story and use it everywhere. Prices should be in <b>MMK (Ks)</b>.</li>
+  </ul>
+</div>
+
+<h2><span class="n">01</span>The Idea</h2>
+<p class="sub">Everything below comes from one sentence. If a design choice doesn't serve it, don't make it.</p>
+<div class="card">
+  <p class="lead" style="margin:0"><b>Nobody should have to wait all day for water.</b></p>
+  <p style="margin:12px 0 0;color:var(--muted)">We are not a water brand. We are a <b>delivery</b> brand that happens to carry water. That is why the logo has motion trails, why the colours are calm-but-warm, and why the voice is short and certain. Certainty is the product.</p>
+</div>
+
+<h2><span class="n">02</span>The Logo</h2>
+<p class="sub">A water drop, moving. The three amber marks behind it are motion trails — the drop is on its way to you.</p>
+
+<div class="grid g2">
+  <div class="logobox">
+    <svg viewBox="0 0 420 96" width="100%" style="max-width:320px" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="l1"><path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z"/></clipPath></defs>
+      <rect x="4" y="41" width="12" height="6" rx="3" fill="#F2A65A" opacity=".45"/>
+      <rect x="0" y="55" width="18" height="6" rx="3" fill="#F2A65A"/>
+      <rect x="6" y="69" width="10" height="6" rx="3" fill="#F2A65A" opacity=".7"/>
+      <path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z" fill="#0B2545"/>
+      <g clip-path="url(#l1)"><path d="M18 66 c8 0 8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 v40 H18 Z" fill="#2CA6A4"/></g>
+      <text x="108" y="48" font-family="Poppins,Inter,sans-serif" font-size="30" font-weight="700" fill="#0B2545" letter-spacing="-0.5">Yay Thal Pya Zat</text>
+      <text x="109" y="72" font-family="Inter,sans-serif" font-size="12.5" font-weight="600" fill="#1C7293" letter-spacing="3.2">WATER, DELIVERED</text>
+    </svg>
+    <div style="font-size:12px;color:var(--muted);margin-top:14px">PRIMARY — horizontal lockup</div>
+  </div>
+  <div class="dark">
+    <svg viewBox="0 0 420 96" width="100%" style="max-width:320px" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="l2"><path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z"/></clipPath></defs>
+      <rect x="4" y="41" width="12" height="6" rx="3" fill="#F8C48F"/>
+      <rect x="0" y="55" width="18" height="6" rx="3" fill="#F2A65A"/>
+      <rect x="6" y="69" width="10" height="6" rx="3" fill="#E08E3C"/>
+      <path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z" fill="#FFFFFF"/>
+      <g clip-path="url(#l2)"><path d="M18 66 c8 0 8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 v40 H18 Z" fill="#2CA6A4"/></g>
+      <text x="108" y="48" font-family="Poppins,Inter,sans-serif" font-size="30" font-weight="700" fill="#FFFFFF" letter-spacing="-0.5">Yay Thal Pya Zat</text>
+      <text x="109" y="72" font-family="Inter,sans-serif" font-size="12.5" font-weight="600" fill="#2CA6A4" letter-spacing="3.2">WATER, DELIVERED</text>
+    </svg>
+    <div style="font-size:12px;color:#8CA6BE;margin-top:14px">REVERSED — for navy or photo backgrounds</div>
+  </div>
+</div>
+
+<div class="grid g3" style="margin-top:16px">
+  <div class="logobox">
+    <svg viewBox="0 0 96 96" width="86" height="86" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="l3"><path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z"/></clipPath></defs>
+      <rect x="4" y="41" width="12" height="6" rx="3" fill="#F2A65A" opacity=".45"/>
+      <rect x="0" y="55" width="18" height="6" rx="3" fill="#F2A65A"/>
+      <rect x="6" y="69" width="10" height="6" rx="3" fill="#F2A65A" opacity=".7"/>
+      <path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z" fill="#0B2545"/>
+      <g clip-path="url(#l3)"><path d="M18 66 c8 0 8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 v40 H18 Z" fill="#2CA6A4"/></g>
+    </svg>
+    <div style="font-size:12px;color:var(--muted);margin-top:10px">MARK — when the name is already nearby</div>
+  </div>
+  <div class="logobox">
+    <svg viewBox="0 0 120 120" width="86" height="86" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="l4"><path d="M66 26 C66 26 40 50 40 68 a26 26 0 0 0 52 0 C92 50 66 26 66 26 Z"/></clipPath></defs>
+      <rect width="120" height="120" rx="27" fill="#0B2545"/>
+      <rect x="20" y="53" width="11" height="5" rx="2.5" fill="#F8C48F"/>
+      <rect x="16" y="65" width="16" height="5" rx="2.5" fill="#F2A65A"/>
+      <rect x="21" y="77" width="9" height="5" rx="2.5" fill="#E08E3C"/>
+      <path d="M66 26 C66 26 40 50 40 68 a26 26 0 0 0 52 0 C92 50 66 26 66 26 Z" fill="#FFFFFF"/>
+      <g clip-path="url(#l4)"><path d="M34 73 c6.5 0 6.5 -6 13 -6 s6.5 6 13 6 s6.5 -6 13 -6 s6.5 6 13 6 s6.5 -6 13 -6 v34 H34 Z" fill="#2CA6A4"/></g>
+    </svg>
+    <div style="font-size:12px;color:var(--muted);margin-top:10px">APP ICON — PWA home screen &amp; favicon</div>
+  </div>
+  <div class="logobox">
+    <svg viewBox="0 0 96 96" width="86" height="86" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="l5"><path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z"/></clipPath></defs>
+      <rect x="4" y="41" width="12" height="6" rx="3" fill="#0B2545" opacity=".35"/>
+      <rect x="0" y="55" width="18" height="6" rx="3" fill="#0B2545" opacity=".75"/>
+      <rect x="6" y="69" width="10" height="6" rx="3" fill="#0B2545" opacity=".55"/>
+      <path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z" fill="#0B2545"/>
+      <g clip-path="url(#l5)"><path d="M18 66 c8 0 8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 v40 H18 Z" fill="#FFFFFF" opacity=".28"/></g>
+    </svg>
+    <div style="font-size:12px;color:var(--muted);margin-top:10px">MONO — receipts, stamps, one-colour printing</div>
+  </div>
+</div>
+
+<h3>Rules</h3>
+<div class="grid g2">
+  <div class="card">
+    <p class="ok" style="margin-top:0">✓ Always</p>
+    <ul style="color:var(--muted)">
+      <li>Leave clear space around the logo equal to <b>the height of the drop</b>. Nothing enters that space.</li>
+      <li>Minimum size: <b>24 px</b> for the mark, <b>120 px wide</b> for the horizontal lockup.</li>
+      <li>Use the reversed (white) version on navy, teal, or any photo.</li>
+      <li>Use SVG on the web. Never a JPG of the logo.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <p class="no" style="margin-top:0">✗ Never</p>
+    <ul style="color:var(--muted)">
+      <li>Recolour the drop (no red, no green, no gradients).</li>
+      <li>Stretch, squash, rotate, or add a drop shadow or outline.</li>
+      <li>Put the navy logo on a dark or busy background.</li>
+      <li>Re-type the wordmark in a different font.</li>
+      <li>Use the 💧 emoji as a logo. That's what's on the site now — replace it.</li>
+    </ul>
+  </div>
+</div>
+
+<h2><span class="n">03</span>Colour</h2>
+<p class="sub">One colour dominates — <b>Deep Well Navy</b>. Teal is the water. Amber is the delivery man: the only warm, human thing on the screen. Use amber for exactly one thing per screen — the action you want taken.</p>
+
+<div class="grid g4">
+  <div class="swatch"><div class="chip" style="background:#0B2545"></div><div class="meta"><b>Deep Well Navy</b><code>#0B2545</code></div></div>
+  <div class="swatch"><div class="chip" style="background:#2CA6A4"></div><div class="meta"><b>Fresh Aqua</b><code>#2CA6A4</code></div></div>
+  <div class="swatch"><div class="chip" style="background:#F2A65A"></div><div class="meta"><b>Delivery Amber</b><code>#F2A65A</code></div></div>
+  <div class="swatch"><div class="chip" style="background:#F4F8FB"></div><div class="meta"><b>Ice</b><code>#F4F8FB</code></div></div>
+</div>
+<div class="grid g4" style="margin-top:14px">
+  <div class="swatch"><div class="chip" style="background:#13395E"></div><div class="meta"><b>Deep</b> <span style="font-size:11px;color:var(--muted)">surfaces on dark</span><code>#13395E</code></div></div>
+  <div class="swatch"><div class="chip" style="background:#1C7293"></div><div class="meta"><b>Teal</b> <span style="font-size:11px;color:var(--muted)">links, labels</span><code>#1C7293</code></div></div>
+  <div class="swatch"><div class="chip" style="background:#132A3E"></div><div class="meta"><b>Ink</b> <span style="font-size:11px;color:var(--muted)">body text</span><code>#132A3E</code></div></div>
+  <div class="swatch"><div class="chip" style="background:#6B8299"></div><div class="meta"><b>Muted</b> <span style="font-size:11px;color:var(--muted)">secondary text</span><code>#6B8299</code></div></div>
+</div>
+
+<h3>The 60 / 30 / 10 rule</h3>
+<div class="card" style="color:var(--muted)">
+  <b style="color:var(--ink)">60%</b> Ice + white (the page) &nbsp;·&nbsp;
+  <b style="color:var(--ink)">30%</b> Navy + teal (headers, cards, nav) &nbsp;·&nbsp;
+  <b style="color:var(--ink)">10%</b> Amber (buttons, the one thing you want tapped)
+  <p style="margin:12px 0 0">If everything is amber, nothing is. One amber button per screen.</p>
+</div>
+
+<h2><span class="n">04</span>Order Status Colours</h2>
+<p class="sub">Your system has 8 order statuses. Every one gets exactly one colour — the same colour on the customer's phone, the admin dashboard, and the delivery man's list. Never invent a new one.</p>
+<table>
+  <tr><th>Status</th><th>Badge</th><th>Hex</th><th>What the customer reads</th></tr>
+  <tr><td><code>pending</code></td><td><span class="pill" style="background:#EDF3F8;color:#4A6B85">Pending</span></td><td><code>#EDF3F8</code> / <code>#4A6B85</code></td><td>"We're waiting for your payment."</td></tr>
+  <tr><td><code>paid</code></td><td><span class="pill" style="background:#FFF0DC;color:#9A6116">Checking payment</span></td><td><code>#FFF0DC</code> / <code>#9A6116</code></td><td>"We got your slip. Checking it now."</td></tr>
+  <tr><td><code>approved</code></td><td><span class="pill" style="background:#DEF3F2;color:#136F6D">Approved</span></td><td><code>#DEF3F2</code> / <code>#136F6D</code></td><td>"Paid. Now pick your delivery time."</td></tr>
+  <tr><td><code>rejected</code></td><td><span class="pill" style="background:#FDE7E5;color:#B3261E">Payment issue</span></td><td><code>#FDE7E5</code> / <code>#B3261E</code></td><td>"Something's wrong with the slip — upload it again."</td></tr>
+  <tr><td><code>scheduled</code></td><td><span class="pill" style="background:#E3EDF7;color:#1C4E80">Scheduled</span></td><td><code>#E3EDF7</code> / <code>#1C4E80</code></td><td>"Thursday, 9–12. We'll be there."</td></tr>
+  <tr><td><code>assigned</code></td><td><span class="pill" style="background:#FBE7D2;color:#8A4B12">On the way</span></td><td><code>#FBE7D2</code> / <code>#8A4B12</code></td><td>"Your delivery man has your order."</td></tr>
+  <tr><td><code>delivered</code></td><td><span class="pill" style="background:#DFF3E6;color:#1E7A46">Delivered</span></td><td><code>#DFF3E6</code> / <code>#1E7A46</code></td><td>"Done. Enjoy."</td></tr>
+  <tr><td><code>cancelled</code></td><td><span class="pill" style="background:#EFF1F3;color:#6B8299">Cancelled</span></td><td><code>#EFF1F3</code> / <code>#6B8299</code></td><td>"Cancelled."</td></tr>
+</table>
+<p style="font-size:14px;color:var(--muted);margin-top:12px"><b>Note:</b> <code>rejected</code> is the only red in the whole product. Red means "you must do something." Nothing else gets to be red.</p>
+
+<h2><span class="n">05</span>Type</h2>
+<p class="sub">Two fonts. Both free on Google Fonts. Both must be loaded — Burmese will not render correctly in Poppins or Inter.</p>
+<div class="grid g2">
+  <div class="card">
+    <h3 style="margin-top:0">Poppins — headings</h3>
+    <p style="font-family:Poppins,sans-serif;font-weight:700;font-size:30px;margin:0;color:var(--navy)">Water, delivered.</p>
+    <p style="color:var(--muted);font-size:14px;margin-top:12px">Weights 600 &amp; 700 only. Headings, buttons, prices, the wordmark.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Inter — everything else</h3>
+    <p style="font-size:16px;margin:0">Body text, labels, form fields, order details, receipts. Weights 400, 500, 600.</p>
+    <p style="color:var(--muted);font-size:14px;margin-top:12px">Inter is designed for small screens — which is where 95% of your customers are.</p>
+  </div>
+</div>
+<div class="card">
+  <h3 style="margin-top:0">Burmese — Noto Sans Myanmar</h3>
+  <p style="color:var(--muted);margin:0">When you add the Burmese version of the app, load <code>Noto Sans Myanmar</code> (or <code>Padauk</code>) and put it <b>after</b> Poppins/Inter in the font stack. The browser will use Poppins for Latin and Noto for Burmese automatically. <b>Add ~15% more line-height</b> for Burmese — the stacked characters need the room, or they clip.</p>
+</div>
+
+<table style="margin-top:16px">
+  <tr><th>Use</th><th>Font</th><th>Size (mobile)</th><th>Weight</th></tr>
+  <tr><td>Page title</td><td>Poppins</td><td>28–32 px</td><td>700</td></tr>
+  <tr><td>Section heading</td><td>Poppins</td><td>20 px</td><td>600</td></tr>
+  <tr><td>Price</td><td>Poppins</td><td>24 px</td><td>700</td></tr>
+  <tr><td>Body</td><td>Inter</td><td>16 px</td><td>400</td></tr>
+  <tr><td>Label / caption</td><td>Inter</td><td>13 px</td><td>500</td></tr>
+  <tr><td>Button</td><td>Poppins</td><td>16 px</td><td>600</td></tr>
+</table>
+<p style="font-size:14px;color:var(--muted)"><b>Never go below 14px for body text.</b> Your customers include tea shop owners in their 50s reading in sunlight.</p>
+
+<h2><span class="n">06</span>Voice</h2>
+<p class="sub">Short. Certain. Never clever. The whole brand promise is "you will know exactly when your water arrives" — so the writing must sound like someone who knows.</p>
+<div class="grid g2">
+  <div class="card">
+    <p class="ok" style="margin-top:0">✓ Say this</p>
+    <ul style="color:var(--muted)">
+      <li>"Thursday, 9–12. We'll be there."</li>
+      <li>"You have 8 coupons left."</li>
+      <li>"Upload your KBZPay screenshot."</li>
+      <li>"Payment issue — upload the slip again."</li>
+      <li>"Delivered. Enjoy."</li>
+    </ul>
+  </div>
+  <div class="card">
+    <p class="no" style="margin-top:0">✗ Not this</p>
+    <ul style="color:var(--muted)">
+      <li>"Your hydration journey begins!"</li>
+      <li>"Delivery estimated within 24–72 hours."</li>
+      <li>"Kindly proceed to remit payment."</li>
+      <li>"Oops! Something went wrong 😅"</li>
+      <li>"Stay hydrated, stay awesome! 💧✨"</li>
+    </ul>
+  </div>
+</div>
+<div class="note" style="margin-top:16px">
+  <b>The one-sentence test:</b> read it out loud. If it sounds like a person telling you when your water is coming, ship it. If it sounds like marketing, delete it.
+</div>
+
+<h2><span class="n">07</span>Copy-paste tokens</h2>
+<p class="sub">Give this to whoever builds the site. It's the entire colour system in the format your Next.js + Tailwind + DaisyUI setup already uses.</p>
+
+<h3>CSS variables</h3>
+<pre>:root {
+  --brand-navy:  #0B2545;   /* dominant */
+  --brand-deep:  #13395E;
+  --brand-teal:  #1C7293;
+  --brand-aqua:  #2CA6A4;   /* water */
+  --brand-amber: #F2A65A;   /* THE action colour — use once per screen */
+  --brand-ice:   #F4F8FB;   /* page background */
+  --brand-ink:   #132A3E;   /* body text */
+  --brand-muted: #6B8299;   /* secondary text */
+  --brand-line:  #E2EBF2;   /* borders */
+  --radius:      12px;      /* every card, button, input */
+}</pre>
+
+<h3>DaisyUI theme</h3>
+<pre>/* app/globals.css */
+@plugin "daisyui/theme" {
+  name: "ytpz";
+  default: true;
+  --color-base-100: #FFFFFF;
+  --color-base-200: #F4F8FB;
+  --color-base-300: #E2EBF2;
+  --color-base-content: #132A3E;
+  --color-primary: #0B2545;
+  --color-primary-content: #FFFFFF;
+  --color-secondary: #2CA6A4;
+  --color-secondary-content: #FFFFFF;
+  --color-accent: #F2A65A;
+  --color-accent-content: #0B2545;
+  --color-neutral: #13395E;
+  --color-info: #1C7293;
+  --color-success: #1E7A46;
+  --color-warning: #9A6116;
+  --color-error: #B3261E;
+  --radius-box: 12px;
+  --radius-btn: 12px;
+}</pre>
+
+<h3>Fonts</h3>
+<pre>&lt;link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&amp;family=Inter:wght@400;500;600&amp;family=Noto+Sans+Myanmar:wght@400;600&amp;display=swap" rel="stylesheet"&gt;
+
+/* then */
+--font-heading: Poppins, 'Noto Sans Myanmar', sans-serif;
+--font-body:    Inter,   'Noto Sans Myanmar', sans-serif;</pre>
+
+<h2><span class="n">08</span>Where it goes</h2>
+<div class="grid g2">
+  <div class="card">
+    <h3 style="margin-top:0">Digital</h3>
+    <ul style="color:var(--muted)">
+      <li><b>Favicon:</b> <code>favicon-32.png</code></li>
+      <li><b>PWA home-screen icon:</b> <code>ytpz-app-icon-192.png</code> + <code>-512.png</code> in your <code>manifest.json</code></li>
+      <li><b>Site header:</b> horizontal lockup, SVG, 140px wide</li>
+      <li><b>Splash screen:</b> stacked lockup, white on navy</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Physical</h3>
+    <ul style="color:var(--muted)">
+      <li><b>Delivery man's shirt:</b> mark on the chest (left), full lockup across the back. Navy shirt, white logo.</li>
+      <li><b>20L bottle collar sticker:</b> mark only + phone number.</li>
+      <li><b>Receipt / invoice:</b> mono version. It has to survive a cheap thermal printer.</li>
+      <li><b>Bike / van panel:</b> reversed lockup, as big as it fits. The trails should point in the direction of travel.</li>
+    </ul>
+  </div>
+</div>
+
+<h2><span class="n">09</span>What to do this week</h2>
+<table>
+  <tr><th>#</th><th>Task</th><th>Where</th></tr>
+  <tr><td>1</td><td>Pick <b>one</b> spelling of the name and search-replace it everywhere</td><td>Everything</td></tr>
+  <tr><td>2</td><td>Replace the 💧 emoji in the header with the SVG logo</td><td>Site header + footer</td></tr>
+  <tr><td>3</td><td>Fix the footer copyright</td><td>Footer</td></tr>
+  <tr><td>4</td><td>Change prices from <code>$</code> to <code>Ks</code>, and match the plan names to your coupon packages</td><td>/subscription</td></tr>
+  <tr><td>5</td><td>Drop in the DaisyUI theme block above</td><td>globals.css</td></tr>
+  <tr><td>6</td><td>Add the app icons to <code>manifest.json</code> so the PWA installs with a real icon</td><td>manifest.json</td></tr>
+  <tr><td>7</td><td>Apply the 8 status colours to every order badge</td><td>Customer + admin + delivery views</td></tr>
+</table>
+
+<p style="text-align:center;color:var(--muted);font-size:13px;margin-top:64px">Yay Thal Pya Zat — Brand Guide v1.0</p>
+
+</div>
+</body>
+</html>

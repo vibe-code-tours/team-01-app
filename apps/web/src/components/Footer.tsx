@@ -28,9 +28,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-              <span className="text-xl" role="img" aria-label="water drop">💧</span>
-              Yay Thal Pya Zat
+            <Link href="/" className="flex items-center">
+              <img src="/ytpz-logo-horizontal-white.svg" alt="Yay Thal Pya Zat" className="h-8" />
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed mt-4 max-w-xs">
               Fresh water delivered to your door. Subscribe today and never run out.

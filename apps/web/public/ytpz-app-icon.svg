@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Yay Thal Pya Zat app icon">
+  <defs><clipPath id="d3"><path d="M66 26 C66 26 40 50 40 68 a26 26 0 0 0 52 0 C92 50 66 26 66 26 Z"/></clipPath></defs>
+  <rect width="120" height="120" rx="27" fill="#0B2545"/>
+  <rect x="20" y="53" width="11" height="5" rx="2.5" fill="#F8C48F"/>
+  <rect x="16" y="65" width="16" height="5" rx="2.5" fill="#F2A65A"/>
+  <rect x="21" y="77" width="9"  height="5" rx="2.5" fill="#E08E3C"/>
+  <path d="M66 26 C66 26 40 50 40 68 a26 26 0 0 0 52 0 C92 50 66 26 66 26 Z" fill="#FFFFFF"/>
+  <g clip-path="url(#d3)"><path d="M34 73 c6.5 0 6.5 -6 13 -6 s6.5 6 13 6 s6.5 -6 13 -6 s6.5 6 13 6 s6.5 -6 13 -6 v34 H34 Z" fill="#2CA6A4"/></g>
+</svg>

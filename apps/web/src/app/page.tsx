@@ -167,7 +167,7 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-sky-100/60 via-blue-50/40 to-cyan-100/50">
         <div className="max-w-4xl mx-auto px-4 py-16 md:py-24 text-center">
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-6 animate-fade-in">
-            <span className="text-base">💧</span>
+            <img src="/ytpz-mark.svg" alt="YTPZ" className="h-4 w-4" />
             Trusted by 500+ Families
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-base-content leading-tight animate-fade-in-up">
@@ -315,16 +315,7 @@ export default function HomePage() {
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-10 w-10 text-primary"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      >
-                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                      </svg>
+                      <img src="/ytpz-mark.svg" alt="YTPZ" className="h-12 w-12" />
                     </div>
                   )}
                 </div>

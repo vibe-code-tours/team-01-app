@@ -7,6 +7,7 @@ import { adminFetch } from "@/lib/api-client";
 import { Pagination } from "@/components/admin/Pagination";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { getSocket, onSocketReady } from "@/lib/socket";
+import { getAllowedTransitions, getActionConfig } from "@/lib/order-status";
 
 interface Order {
   id: string;
@@ -38,6 +39,7 @@ export default function OrdersPage() {
   const [typeFilter, setTypeFilter] = useState("");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -56,6 +58,19 @@ export default function OrdersPage() {
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  async function handleQuickAction(orderId: string, targetStatus: string) {
+    setActionLoading(orderId);
+    const result = await adminFetch(`/orders/${orderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: targetStatus }),
+    });
+    setActionLoading(null);
+    if (result.success) {
+      loadOrders();
+    }
+  }
 
   useEffect(() => {
     let cleanup: (() => void) | null = null;
@@ -153,7 +168,7 @@ export default function OrdersPage() {
                   <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Amount</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Status</th>
                   <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Date</th>
-                  <th className="w-10 px-5 py-3"></th>
+                  <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider px-5 py-3">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -191,12 +206,35 @@ export default function OrdersPage() {
                         {new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
-                      <Link href={`/admin/orders/${order.id}`} className="text-gray-300 hover:text-primary transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
+                    <td className="px-5 py-3 text-right">
+                      {(() => {
+                        const transitions = getAllowedTransitions(order.status, order.orderType);
+                        if (transitions.length === 0) return null;
+                        // Show the first positive action (not cancelled)
+                        const nextAction = transitions.find((s) => s !== "cancelled" && s !== "rejected");
+                        if (!nextAction) return null;
+                        const config = getActionConfig(nextAction);
+                        // "assigned" action redirects to assignments page
+                        if (nextAction === "assigned") {
+                          return (
+                            <Link
+                              href="/admin/assignments"
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${config.color}`}
+                            >
+                              {config.label}
+                            </Link>
+                          );
+                        }
+                        return (
+                          <button
+                            onClick={() => handleQuickAction(order.id, nextAction)}
+                            disabled={actionLoading === order.id}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 ${config.color}`}
+                          >
+                            {actionLoading === order.id ? "..." : config.label}
+                          </button>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}

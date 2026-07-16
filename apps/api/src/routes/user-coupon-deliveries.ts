@@ -159,7 +159,7 @@ routes.post("/user/coupon-deliveries", async (c) => {
         userId: currentUser.id,
         orderType: "coupon-delivery",
         totalAmount: "0",
-        status: "pending",
+        status: "scheduled",
         bottleCount,
       })
       .returning();
@@ -220,9 +220,9 @@ routes.patch("/user/coupon-deliveries/:id", async (c) => {
   if (!delivery) {
     return c.json({ success: false, error: "Delivery not found" }, 404);
   }
-  if (delivery.status !== "pending") {
+  if (!["pending", "scheduled"].includes(delivery.status)) {
     return c.json(
-      { success: false, error: "Can only cancel pending deliveries" },
+      { success: false, error: "Can only cancel pending or scheduled deliveries" },
       400,
     );
   }

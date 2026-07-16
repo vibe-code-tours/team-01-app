@@ -136,11 +136,48 @@ routes.patch("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
     return c.json({ success: false, error: "Order not found" }, 404);
   }
 
+  // Validate status transitions
+  if (status && status !== existing.status) {
+    const RETAIL_TRANSITIONS: Record<string, string[]> = {
+      pending: ["paid", "cancelled"],
+      paid: ["approved", "cancelled"],
+      approved: ["cancelled"],       // user schedules, admin can only cancel
+      scheduled: ["assigned", "cancelled"],
+      assigned: ["delivered", "cancelled"],
+      delivered: [],
+      cancelled: [],
+      rejected: [],
+    };
+    const COUPON_TRANSITIONS: Record<string, string[]> = {
+      pending: ["paid", "cancelled"],
+      paid: ["approved", "cancelled"],
+      approved: ["cancelled"],       // user schedules
+      scheduled: ["assigned", "cancelled"],
+      assigned: ["delivered", "cancelled"],
+      delivered: [],
+      cancelled: [],
+    };
+    const SUBSCRIPTION_TRANSITIONS: Record<string, string[]> = {
+      pending: ["paid", "cancelled"],
+      paid: ["approved", "cancelled"],
+      approved: [],
+      cancelled: [],
+      rejected: [],
+    };
+    const transitions = existing.orderType === "subscription" ? SUBSCRIPTION_TRANSITIONS
+      : existing.orderType === "coupon-delivery" ? COUPON_TRANSITIONS
+      : RETAIL_TRANSITIONS;
+    const allowed = transitions[existing.status] || [];
+    if (!allowed.includes(status)) {
+      return c.json({ success: false, error: `Cannot change status from "${existing.status}" to "${status}"` }, 400);
+    }
+  }
+
   // Handle coupon-delivery specific status transitions
   if (existing.orderType === "coupon-delivery") {
     if (status === "assigned") {
-      if (existing.status !== "pending") {
-        return c.json({ success: false, error: "Can only assign pending deliveries" }, 400);
+      if (existing.status !== "scheduled") {
+        return c.json({ success: false, error: "Can only assign scheduled deliveries" }, 400);
       }
       if (!deliveryPersonId) {
         return c.json({ success: false, error: "deliveryPersonId is required" }, 400);
@@ -212,6 +249,24 @@ routes.patch("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
 
   const [updated] = await db.update(orders).set(updates).where(eq(orders.id, id)).returning();
 
+  // Emit status change notification immediately after DB update
+  if (status && status !== existing.status) {
+    try {
+      const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+      const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+      await createAndEmitNotification({
+        userId: existing.userId,
+        type: "order_status_changed",
+        title: `Order ${statusLabel}`,
+        message: `Your order status has been updated to "${status}".`,
+        entityType: "order",
+        entityId: id,
+        link: `/orders/${id}`,
+      });
+      broadcastToAdmins("order:status-changed", { orderId: id, status });
+    } catch { /* best-effort */ }
+  }
+
   // When subscription order is approved, create the subscription with coupons
   if (status === "approved" && existing.orderType === "subscription" && existing.status !== "approved") {
     try {
@@ -243,24 +298,6 @@ routes.patch("/orders/:id", requireRole("super-admin", "admin"), async (c) => {
     }
   }
 
-  // Notify user of status change (for non-subscription or other status changes)
-  if (status && !(status === "approved" && existing.orderType === "subscription")) {
-    try {
-      const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
-      const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
-      await createAndEmitNotification({
-        userId: existing.userId,
-        type: "order_status_changed",
-        title: `Order ${statusLabel}`,
-        message: `Your order status has been updated to "${status}".`,
-        entityType: "order",
-        entityId: id,
-        link: `/orders/${id}`,
-      });
-      broadcastToAdmins("order:status-changed", { orderId: id, status });
-    } catch { /* best-effort */ }
-  }
-
   return c.json({ success: true, data: updated });
 });
 
@@ -277,6 +314,196 @@ routes.get("/delivery-persons", requireRole("super-admin", "admin"), async (c) =
     .orderBy(deliveryPersons.name);
 
   return c.json({ success: true, data: items });
+});
+
+// Bulk assign orders to a delivery person
+routes.post("/assignments/bulk", requireRole("super-admin", "admin"), async (c) => {
+  const body = await c.req.json();
+  const { orderIds, deliveryPersonId } = body;
+
+  if (!orderIds?.length || !deliveryPersonId) {
+    return c.json({ success: false, error: "orderIds and deliveryPersonId are required" }, 400);
+  }
+
+  // Verify delivery person exists and is active
+  const [dp] = await db
+    .select()
+    .from(deliveryPersons)
+    .where(sql`${deliveryPersons.id} = ${deliveryPersonId} AND ${deliveryPersons.status} = 'active'`);
+  if (!dp) {
+    return c.json({ success: false, error: "Delivery person not found or inactive" }, 400);
+  }
+
+  // Update orders: set deliveryPersonId, assignedAt, status = "assigned"
+  const now = new Date();
+  let assignedCount = 0;
+
+  for (const orderId of orderIds) {
+    const [existing] = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!existing) continue;
+    // Only assign orders that are in assignable statuses
+    if (!["approved", "scheduled"].includes(existing.status)) continue;
+
+    await db
+      .update(orders)
+      .set({
+        deliveryPersonId,
+        assignedAt: now,
+        status: "assigned",
+        updatedAt: now,
+      })
+      .where(eq(orders.id, orderId));
+    assignedCount++;
+
+    // Notify user
+    try {
+      const { createAndEmitNotification } = await import("../lib/notifications.js");
+      await createAndEmitNotification({
+        userId: existing.userId,
+        type: "delivery_created",
+        title: "Delivery Assigned",
+        message: `Your order has been assigned to ${dp.name} for delivery.`,
+        entityType: "order",
+        entityId: orderId,
+        link: `/orders/${orderId}`,
+      });
+    } catch { /* best-effort */ }
+  }
+
+  // Broadcast to admins
+  try {
+    const { broadcastToAdmins } = await import("../lib/notifications.js");
+    broadcastToAdmins("delivery:new", { count: assignedCount });
+  } catch { /* best-effort */ }
+
+  return c.json({ success: true, data: { assigned: assignedCount, deliveryPerson: dp.name } });
+});
+
+// Get assignable orders (approved/scheduled) for assignment panel
+routes.get("/assignable", requireRole("super-admin", "admin"), async (c) => {
+  const townshipId = c.req.query("townshipId") || "";
+  const provinceId = c.req.query("provinceId") || "";
+
+  const conditions = [
+    sql`${orders.status} IN ('approved', 'scheduled')`,
+    sql`${orders.orderType} != 'subscription'`,
+  ];
+
+  if (townshipId) {
+    conditions.push(sql`${orderSchedules.townshipId} = ${townshipId}`);
+  } else if (provinceId) {
+    conditions.push(sql`${townships.provinceId} = ${provinceId}`);
+  }
+
+  const where = sql.join(conditions, sql` AND `);
+
+  const items = await db
+    .select({
+      id: orders.id,
+      userId: orders.userId,
+      orderType: orders.orderType,
+      totalAmount: orders.totalAmount,
+      bottleCount: orders.bottleCount,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      userName: user.name,
+      deliveryAddress: orderSchedules.deliveryAddress,
+      contactPhone: orderSchedules.contactPhone,
+      townshipName: townships.name,
+      scheduleDate: schedules.date,
+      scheduleTimeStart: schedules.timeStart,
+      scheduleTimeEnd: schedules.timeEnd,
+    })
+    .from(orders)
+    .leftJoin(user, eq(orders.userId, user.id))
+    .leftJoin(orderSchedules, eq(orderSchedules.orderId, orders.id))
+    .leftJoin(townships, eq(orderSchedules.townshipId, townships.id))
+    .leftJoin(schedules, eq(orderSchedules.scheduleId, schedules.id))
+    .where(where)
+    .orderBy(orders.createdAt);
+
+  return c.json({ success: true, data: items });
+});
+
+// Get orders assigned to a specific delivery person
+routes.get("/assigned/:deliveryPersonId", requireRole("super-admin", "admin", "delivery"), async (c) => {
+  const dpId = c.req.param("deliveryPersonId") as string;
+  const status = c.req.query("status") || "";
+
+  const conditions = [
+    sql`${orders.deliveryPersonId} = ${dpId}`,
+    sql`${orders.status} IN ('assigned', 'delivered')`,
+  ];
+
+  if (status) {
+    conditions.push(sql`${orders.status} = ${status}`);
+  }
+
+  const where = sql.join(conditions, sql` AND `);
+
+  const items = await db
+    .select({
+      id: orders.id,
+      userId: orders.userId,
+      orderType: orders.orderType,
+      totalAmount: orders.totalAmount,
+      bottleCount: orders.bottleCount,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      assignedAt: orders.assignedAt,
+      userName: user.name,
+      userPhone: user.phone,
+      deliveryAddress: orderSchedules.deliveryAddress,
+      contactPhone: orderSchedules.contactPhone,
+      townshipName: townships.name,
+      scheduleDate: schedules.date,
+      scheduleTimeStart: schedules.timeStart,
+      scheduleTimeEnd: schedules.timeEnd,
+    })
+    .from(orders)
+    .leftJoin(user, eq(orders.userId, user.id))
+    .leftJoin(orderSchedules, eq(orderSchedules.orderId, orders.id))
+    .leftJoin(townships, eq(orderSchedules.townshipId, townships.id))
+    .leftJoin(schedules, eq(orderSchedules.scheduleId, schedules.id))
+    .where(where)
+    .orderBy(orders.assignedAt);
+
+  return c.json({ success: true, data: items });
+});
+
+// Mark order as delivered (by delivery person)
+routes.patch("/orders/:id/deliver", requireRole("super-admin", "admin", "delivery"), async (c) => {
+  const id = c.req.param("id") as string;
+  const [existing] = await db.select().from(orders).where(eq(orders.id, id));
+  if (!existing) {
+    return c.json({ success: false, error: "Order not found" }, 404);
+  }
+  if (existing.status !== "assigned") {
+    return c.json({ success: false, error: "Can only deliver assigned orders" }, 400);
+  }
+
+  const [updated] = await db
+    .update(orders)
+    .set({ status: "delivered", updatedAt: new Date() })
+    .where(eq(orders.id, id))
+    .returning();
+
+  // Notify user
+  try {
+    const { createAndEmitNotification, broadcastToAdmins } = await import("../lib/notifications.js");
+    await createAndEmitNotification({
+      userId: existing.userId,
+      type: "delivery_status_changed",
+      title: "Order Delivered",
+      message: "Your order has been delivered successfully.",
+      entityType: "order",
+      entityId: id,
+      link: `/orders/${id}`,
+    });
+    broadcastToAdmins("order:status-changed", { orderId: id, status: "delivered" });
+  } catch { /* best-effort */ }
+
+  return c.json({ success: true, data: updated });
 });
 
 export { routes as orderRoutes };

@@ -16,6 +16,7 @@ import { publicRoutes } from "./src/routes/public.js";
 import { userRoutes } from "./src/routes/user.js";
 import { userOrderRoutes } from "./src/routes/user-orders.js";
 import { userCouponDeliveryRoutes } from "./src/routes/user-coupon-deliveries.js";
+import { notificationRoutes } from "./src/routes/notifications.js";
 import { auth } from "./src/lib/auth.js";
 import { errorHandler } from "./src/middleware/error.js";
 
@@ -75,6 +76,7 @@ app.route("/api", publicRoutes);
 app.route("/api", userRoutes);
 app.route("/api", userOrderRoutes);
 app.route("/api", userCouponDeliveryRoutes);
+app.route("/api", notificationRoutes);
 
 app.onError(errorHandler);
 

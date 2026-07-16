@@ -66,6 +66,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: water-delivery-web
+    command: npx next dev apps/web --port 3000
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3006}
       API_URL: http://api:3001

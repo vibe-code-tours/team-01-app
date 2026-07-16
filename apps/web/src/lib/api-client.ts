@@ -29,11 +29,14 @@ export async function signIn(
     credentials: "include",
     body: JSON.stringify({ email, password }),
   });
-  const data = await res.json();
+  const text = await res.text();
   if (!res.ok) {
-    return { success: false, error: data.message || "Invalid credentials" };
+    let message = "Invalid credentials";
+    try { message = JSON.parse(text).message || message; } catch { /* empty */ }
+    return { success: false, error: message };
   }
-  return { success: true, data };
+  if (!text) return { success: true, data: {} };
+  return { success: true, data: JSON.parse(text) };
 }
 
 export async function signOut(): Promise<void> {
@@ -64,6 +67,7 @@ export async function userFetch<T = unknown>(
 ): Promise<ApiResponse<T>> {
   const res = await fetch(`/api/user${path}`, {
     credentials: "include",
+    cache: "no-store",
     ...options,
   });
   const text = await res.text();

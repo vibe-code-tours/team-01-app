@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { userFetch } from "@/lib/api-client";
+import type { Socket } from "socket.io-client";
+import { getSocket, onSocketReady, connectSocket } from "@/lib/socket";
 
 interface OrderItem {
   id: string;
@@ -112,16 +114,63 @@ export default function OrderDetailPage() {
   const [confirming, setConfirming] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      const result = await userFetch<Order>(`/orders/${id}`);
-      if (result.success && result.data) {
-        setOrder(result.data);
-      }
-      setLoading(false);
+  // Schedule state
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [schedules, setSchedules] = useState<{ id: string; date: string; time_start: string; time_end: string; spots_left: number }[]>([]);
+  const [selectedSchedule, setSelectedSchedule] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [scheduleNotes, setScheduleNotes] = useState("");
+  const [scheduling, setScheduling] = useState(false);
+  const [loadingSchedules, setLoadingSchedules] = useState(false);
+
+  const loadOrder = useCallback(async () => {
+    const result = await userFetch<Order>(`/orders/${id}`);
+    if (result.success && result.data) {
+      setOrder(result.data);
     }
-    load();
+    setLoading(false);
   }, [id]);
+
+  useEffect(() => {
+    loadOrder();
+    connectSocket();
+  }, [loadOrder]);
+
+  // Real-time status updates via Socket.IO
+  useEffect(() => {
+    let cleanup: (() => void) | null = null;
+    let mounted = true;
+    let attached = false;
+
+    function attach(socket: Socket) {
+      if (attached) return;
+      attached = true;
+      const onStatusChanged = (data: { orderId: string }) => {
+        if (mounted && data.orderId === id) loadOrder();
+      };
+      socket.on("order:status-changed", onStatusChanged);
+      socket.on("delivery:status-changed", onStatusChanged);
+      cleanup = () => {
+        socket.off("order:status-changed", onStatusChanged);
+        socket.off("delivery:status-changed", onStatusChanged);
+      };
+    }
+
+    const socket = getSocket();
+    if (socket) {
+      attach(socket);
+    } else {
+      const unsubscribe = onSocketReady(() => {
+        if (!mounted) return;
+        const s = getSocket();
+        if (s) attach(s);
+      });
+      cleanup = () => { unsubscribe(); };
+    }
+
+    return () => { mounted = false; cleanup?.(); };
+  }, [id, loadOrder]);
 
   async function handleUploadProof(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -180,6 +229,47 @@ export default function OrderDetailPage() {
     } else {
       setMessage(result.error || "Failed to confirm payment");
     }
+  }
+
+  const loadSchedules = useCallback(async () => {
+    setLoadingSchedules(true);
+    const result = await userFetch<{ id: string; date: string; time_start: string; time_end: string; spots_left: number }[]>("/schedules");
+    if (result.success && result.data) {
+      setSchedules(result.data);
+    }
+    setLoadingSchedules(false);
+  }, []);
+
+  async function handleSchedule() {
+    if (!selectedSchedule || !deliveryAddress || !contactPhone) return;
+    setScheduling(true);
+    setMessage("");
+
+    const result = await userFetch(`/orders/${id}/schedule`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scheduleId: selectedSchedule,
+        deliveryAddress,
+        contactPhone,
+        notes: scheduleNotes || undefined,
+      }),
+    });
+
+    setScheduling(false);
+    if (result.success) {
+      setMessage("Delivery scheduled successfully!");
+      setShowSchedule(false);
+      const refreshed = await userFetch<Order>(`/orders/${id}`);
+      if (refreshed.success && refreshed.data) setOrder(refreshed.data);
+    } else {
+      setMessage(result.error || "Failed to schedule delivery");
+    }
+  }
+
+  function openSchedule() {
+    setShowSchedule(true);
+    loadSchedules();
   }
 
   if (loading) {
@@ -402,12 +492,138 @@ export default function OrderDetailPage() {
 
         {/* Waiting for approval */}
         {order.status === "paid" && (
-          <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl p-5 text-center">
+          <div key="paid-status" className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl p-5 text-center">
             <div className="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center mx-auto mb-2">
               <span className="loading loading-spinner loading-sm text-sky-500"></span>
             </div>
             <p className="text-sm font-medium text-sky-700 dark:text-sky-400">Waiting for admin approval</p>
             <p className="text-xs text-base-content/50 mt-1">We&apos;ll notify you once your payment is verified.</p>
+          </div>
+        )}
+
+        {/* Schedule Delivery for approved orders */}
+        {order.status === "approved" && order.orderType !== "subscription" && (
+          <div className="bg-base-100 border border-base-200 rounded-2xl p-5">
+            {!showSchedule ? (
+              <>
+                <div className="flex items-center gap-2 mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <h3 className="text-sm font-semibold text-base-content">Schedule Delivery</h3>
+                </div>
+                <p className="text-sm text-base-content/50 mb-4">Your order has been approved. Choose a delivery date and time.</p>
+                <button className="btn btn-primary w-full" onClick={openSchedule}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Select Delivery Time
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-base-content">Choose Delivery Time</h3>
+                  <button className="text-xs text-base-content/50 hover:text-base-content" onClick={() => setShowSchedule(false)}>Cancel</button>
+                </div>
+
+                {loadingSchedules ? (
+                  <div className="flex justify-center py-6">
+                    <span className="loading loading-spinner loading-sm"></span>
+                  </div>
+                ) : schedules.length === 0 ? (
+                  <p className="text-sm text-base-content/50 text-center py-4">No available time slots. Please try again later.</p>
+                ) : (
+                  <>
+                    {/* Schedule selection */}
+                    <div className="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                      {schedules.map((s) => (
+                        <label
+                          key={s.id}
+                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                            selectedSchedule === s.id
+                              ? "border-primary bg-primary/5"
+                              : "border-base-200 hover:border-base-300"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="schedule"
+                            value={s.id}
+                            checked={selectedSchedule === s.id}
+                            onChange={() => setSelectedSchedule(s.id)}
+                            className="radio radio-sm radio-primary"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{new Date(s.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</p>
+                            <p className="text-xs text-base-content/50">{s.time_start} - {s.time_end}</p>
+                          </div>
+                          <span className="text-xs text-base-content/40">{s.spots_left} spots</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    {/* Address */}
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-base-content/70 mb-1">Delivery Address *</label>
+                      <input
+                        type="text"
+                        className="input input-bordered input-sm w-full"
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        placeholder="Enter your delivery address"
+                      />
+                    </div>
+
+                    {/* Phone */}
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-base-content/70 mb-1">Contact Phone *</label>
+                      <input
+                        type="tel"
+                        className="input input-bordered input-sm w-full"
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        placeholder="Phone number"
+                      />
+                    </div>
+
+                    {/* Notes */}
+                    <div className="mb-4">
+                      <label className="block text-xs font-medium text-base-content/70 mb-1">Notes (optional)</label>
+                      <textarea
+                        className="textarea textarea-bordered textarea-sm w-full"
+                        rows={2}
+                        value={scheduleNotes}
+                        onChange={(e) => setScheduleNotes(e.target.value)}
+                        placeholder="Delivery instructions..."
+                      />
+                    </div>
+
+                    <button
+                      className="btn btn-primary w-full"
+                      onClick={handleSchedule}
+                      disabled={scheduling || !selectedSchedule || !deliveryAddress || !contactPhone}
+                    >
+                      {scheduling ? <span className="loading loading-spinner loading-sm"></span> : null}
+                      {scheduling ? "Scheduling..." : "Confirm Schedule"}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Approved - subscription done */}
+        {order.status === "approved" && order.orderType === "subscription" && (
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 text-center">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Subscription Active</p>
+            <p className="text-xs text-base-content/50 mt-1">Your coupons have been added. Use them to schedule deliveries anytime.</p>
           </div>
         )}
 

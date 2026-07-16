@@ -394,9 +394,9 @@ routes.post("/user/orders/:orderId/schedule", async (c) => {
     );
 
   if (!order) return c.json({ success: false, error: "Order not found" }, 404);
-  if (order.status !== "pending" && order.status !== "approved") {
+  if (order.status !== "approved") {
     return c.json(
-      { success: false, error: "Order is not in a bookable status" },
+      { success: false, error: "Order must be approved before scheduling" },
       400,
     );
   }
