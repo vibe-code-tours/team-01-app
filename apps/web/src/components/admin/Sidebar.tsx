@@ -127,7 +127,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="bg-[#0F172A] min-h-full w-64 flex flex-col border-r border-white/5">
+    <aside className="bg-[#0B2545] min-h-full w-64 flex flex-col border-r border-white/5">
       {/* Logo */}
       <div className="p-5">
         <Link href="/admin" className="flex items-center gap-2.5 font-bold text-white text-lg tracking-tight">
