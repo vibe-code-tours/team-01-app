@@ -43,14 +43,14 @@ interface CouponDelivery {
 }
 
 const statusStyles: Record<string, { bg: string; text: string }> = {
-  pending: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-800 dark:text-amber-300" },
-  paid: { bg: "bg-teal-100 dark:bg-teal-900/30", text: "text-teal-800 dark:text-teal-300" },
-  approved: { bg: "bg-indigo-100 dark:bg-indigo-900/30", text: "text-indigo-800 dark:text-indigo-300" },
-  scheduled: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-800 dark:text-blue-300" },
-  assigned: { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-800 dark:text-violet-300" },
-  delivered: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-800 dark:text-emerald-300" },
-  cancelled: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-800 dark:text-red-300" },
-  rejected: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-800 dark:text-red-300" },
+  pending: { bg: "bg-[#EDF3F8]", text: "text-[#4A6B85]" },
+  paid: { bg: "bg-[#FFF0DC]", text: "text-[#9A6116]" },
+  approved: { bg: "bg-[#DEF3F2]", text: "text-[#136F6D]" },
+  scheduled: { bg: "bg-[#E3EDF7]", text: "text-[#1C4E80]" },
+  assigned: { bg: "bg-[#FBE7D2]", text: "text-[#8A4B12]" },
+  delivered: { bg: "bg-[#DFF3E6]", text: "text-[#1E7A46]" },
+  cancelled: { bg: "bg-[#EFF1F3]", text: "text-[#6B8299]" },
+  rejected: { bg: "bg-[#FDE7E5]", text: "text-[#B3261E]" },
 };
 
 const statusLabels: Record<string, string> = {

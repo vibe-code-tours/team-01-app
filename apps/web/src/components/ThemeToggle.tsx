@@ -9,13 +9,13 @@ export function ThemeToggle({ scrolled = false }: { scrolled?: boolean }) {
     const saved = localStorage.getItem("theme") as "light" | "dark" | null;
     const initial = saved ?? "light";
     setTheme(initial);
-    document.documentElement.setAttribute("data-theme", initial === "dark" ? "dark" : "water");
+    document.documentElement.setAttribute("data-theme", initial === "dark" ? "dark" : "ytpz");
   }, []);
 
   const toggle = () => {
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next === "dark" ? "dark" : "water");
+    document.documentElement.setAttribute("data-theme", next === "dark" ? "dark" : "ytpz");
     localStorage.setItem("theme", next);
   };
 

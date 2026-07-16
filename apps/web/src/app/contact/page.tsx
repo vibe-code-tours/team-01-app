@@ -88,7 +88,7 @@ export default function ContactPage() {
                     <textarea id="message" className="textarea h-32 bg-base-100 w-full" placeholder="How can we help?" required />
                   </div>
 
-                  <button type="submit" className="btn px-8 text-white" style={{ backgroundColor: "#1E6091" }}>
+                  <button type="submit" className="btn btn-primary px-8">
                     Send Message
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>

@@ -70,7 +70,7 @@ export function Navbar() {
   return (
     <nav
       className={`sticky top-0 z-50 transition-all duration-200 ${scrolled ? "shadow-lg" : "bg-base-100"}`}
-      style={scrolled ? { backgroundColor: "#1E6091" } : undefined}
+      style={scrolled ? { backgroundColor: "#0B2545" } : undefined}
     >
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}

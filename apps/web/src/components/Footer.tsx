@@ -68,7 +68,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-white/10 mt-12 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
-          <p>&copy; {new Date().getFullYear()} WaterDelivery. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Yay Thal Pya Zat. All rights reserved.</p>
           <div className="flex gap-6 mt-3 md:mt-0">
             <span className="hover:text-white/70 transition-colors cursor-pointer">Privacy Policy</span>
             <span className="hover:text-white/70 transition-colors cursor-pointer">Terms of Service</span>

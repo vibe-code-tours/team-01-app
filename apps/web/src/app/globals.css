@@ -1,9 +1,9 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700&family=Rubik:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 @plugin "daisyui" {
   themes:
-    water --default,
+    ytpz --default,
     dark --prefersdark;
   base: true;
   styled: true;
@@ -12,77 +12,92 @@
   logs: false;
 }
 
-@theme {
-  --color-water-primary: #1e6091;
-  --color-water-primary-dark: #154b6f;
-  --color-water-secondary: #0891b2;
-  --color-water-accent: #0e7490;
-  --color-water-surface: #eff8ff;
-  --color-water-surface-dark: #dbeafe;
-  --color-water-border: #bfdbfe;
-}
-
-/* DaisyUI ocean theme */
-:root[data-theme="water"] {
-  --p: 205 70% 35%;
-  --pf: 205 70% 25%;
+/* DaisyUI YTPZ brand theme — from Brand Guide v1.0 */
+:root[data-theme="ytpz"] {
+  --p: 213 80% 16%;
+  --pf: 213 80% 12%;
   --pc: 0 0% 100%;
-  --s: 187 72% 37%;
-  --sf: 187 72% 27%;
+  --s: 176 45% 42%;
+  --sf: 176 45% 32%;
   --sc: 0 0% 100%;
-  --a: 187 68% 32%;
-  --af: 187 68% 22%;
-  --ac: 0 0% 100%;
-  --n: 210 40% 96%;
-  --nf: 210 40% 92%;
-  --nc: 215 25% 15%;
-  --b1: 210 100% 98%;
-  --b2: 210 100% 96%;
-  --b3: 210 100% 93%;
-  --bc: 215 25% 15%;
-  --in: 198 93% 60%;
-  --inc: 198 100% 12%;
-  --su: 160 60% 45%;
-  --suc: 160 100% 10%;
-  --wa: 38 92% 50%;
-  --wac: 38 100% 10%;
-  --er: 0 72% 51%;
-  --erc: 0 100% 14%;
+  --a: 30 85% 66%;
+  --af: 30 85% 50%;
+  --ac: 213 80% 16%;
+  --n: 210 25% 96%;
+  --nf: 210 25% 90%;
+  --nc: 210 30% 18%;
+  --b1: 0 0% 100%;
+  --b2: 210 40% 96%;
+  --b3: 210 30% 89%;
+  --bc: 210 30% 18%;
+  --in: 199 72% 42%;
+  --inc: 0 0% 100%;
+  --su: 152 60% 36%;
+  --suc: 0 0% 100%;
+  --wa: 28 75% 52%;
+  --wac: 0 0% 100%;
+  --er: 3 65% 44%;
+  --erc: 0 0% 100%;
+  --radius-box: 12px;
+  --radius-btn: 12px;
 }
 
-/* Button color overrides */
+/* Brand colors as CSS vars */
+:root {
+  --brand-navy: #0B2545;
+  --brand-deep: #13395E;
+  --brand-teal: #1C7293;
+  --brand-aqua: #2CA6A4;
+  --brand-amber: #F2A65A;
+  --brand-ice: #F4F8FB;
+  --brand-ink: #132A3E;
+  --brand-muted: #6B8299;
+  --brand-line: #E2EBF2;
+}
+
+/* Button overrides — brand navy primary */
 .btn-primary {
-  background-color: #1e6091 !important;
+  background-color: #0B2545 !important;
   color: #ffffff !important;
   border: none;
-  box-shadow: 0 2px 8px -2px rgba(30, 96, 145, 0.3);
+  box-shadow: 0 2px 8px -2px rgba(11, 37, 69, 0.3);
 }
 .btn-primary:hover {
-  background-color: #154b6f !important;
-  box-shadow: 0 4px 12px -2px rgba(30, 96, 145, 0.4);
+  background-color: #13395E !important;
+  box-shadow: 0 4px 12px -2px rgba(11, 37, 69, 0.4);
 }
 .btn-secondary {
+  background-color: #2CA6A4 !important;
+  color: #ffffff !important;
   border: none;
-  box-shadow: 0 2px 8px -2px rgba(8, 145, 178, 0.3);
+  box-shadow: 0 2px 8px -2px rgba(44, 166, 164, 0.3);
+}
+.btn-secondary:hover {
+  background-color: #1C7293 !important;
+}
+.btn-accent {
+  background-color: #F2A65A !important;
+  color: #0B2545 !important;
+  border: none;
 }
 .btn-outline {
-  border: 1.5px solid #1e6091;
-  color: #1e6091;
+  border: 1.5px solid #0B2545;
+  color: #0B2545;
   background: transparent;
 }
 .btn-outline:hover {
-  background-color: #1e6091 !important;
+  background-color: #0B2545 !important;
   color: #ffffff !important;
-  border-color: #1e6091;
+  border-color: #0B2545;
 }
 .btn-ghost {
   border: none;
   background: transparent;
 }
 
-/* Badge color overrides */
+/* Badge overrides */
 .badge-primary {
-  background-color: #1e6091 !important;
+  background-color: #0B2545 !important;
   color: #ffffff !important;
   border-color: transparent !important;
   overflow: visible !important;
@@ -189,8 +204,8 @@
 .card-hover:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 8px 25px -5px rgba(30, 96, 145, 0.12),
-    0 8px 10px -6px rgba(30, 96, 145, 0.06);
+    0 8px 25px -5px rgba(11, 37, 69, 0.12),
+    0 8px 10px -6px rgba(11, 37, 69, 0.06);
 }
 
 /* Smooth scrollbar */
@@ -218,20 +233,20 @@
 .textarea {
   border-width: 1px !important;
   border-style: solid !important;
-  border-color: #94a3b8 !important;
+  border-color: #E2EBF2 !important;
   background-color: #ffffff !important;
-  color: #1e293b !important;
+  color: #132A3E !important;
 }
 .input:focus,
 .select:focus,
 .textarea:focus {
-  border-color: #1e6091 !important;
+  border-color: #0B2545 !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(30, 96, 145, 0.2) !important;
+  box-shadow: 0 0 0 2px rgba(11, 37, 69, 0.2) !important;
 }
 .select option {
   background-color: #ffffff !important;
-  color: #1e293b !important;
+  color: #132A3E !important;
   padding: 8px 12px;
 }
 

@@ -5,14 +5,14 @@ type StatusColor = {
 
 const statusColors: Record<string, Record<string, StatusColor>> = {
   order: {
-    pending:   { bg: "bg-amber-50", text: "text-amber-800" },
-    paid:      { bg: "bg-teal-50", text: "text-teal-800" },
-    approved:  { bg: "bg-indigo-50", text: "text-indigo-800" },
-    rejected:  { bg: "bg-red-50", text: "text-red-700" },
-    scheduled: { bg: "bg-sky-50", text: "text-sky-800" },
-    assigned:  { bg: "bg-violet-50", text: "text-violet-800" },
-    delivered: { bg: "bg-emerald-50", text: "text-emerald-800" },
-    cancelled: { bg: "bg-red-50", text: "text-red-700" },
+    pending:   { bg: "bg-[#EDF3F8]", text: "text-[#4A6B85]" },
+    paid:      { bg: "bg-[#FFF0DC]", text: "text-[#9A6116]" },
+    approved:  { bg: "bg-[#DEF3F2]", text: "text-[#136F6D]" },
+    rejected:  { bg: "bg-[#FDE7E5]", text: "text-[#B3261E]" },
+    scheduled: { bg: "bg-[#E3EDF7]", text: "text-[#1C4E80]" },
+    assigned:  { bg: "bg-[#FBE7D2]", text: "text-[#8A4B12]" },
+    delivered: { bg: "bg-[#DFF3E6]", text: "text-[#1E7A46]" },
+    cancelled: { bg: "bg-[#EFF1F3]", text: "text-[#6B8299]" },
   },
   subscription: {
     active:   { bg: "bg-emerald-50", text: "text-emerald-800" },
