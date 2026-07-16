@@ -120,9 +120,10 @@ export function NotificationBell({ scrolled }: NotificationBellProps) {
               </div>
             ) : (
               notifications.slice(0, 10).map((n) => (
-                <button
+                <Link
                   key={n.id}
-                  className="w-full text-left px-4 py-3 transition-colors border-b"
+                  href={(n.link && n.link.startsWith("/")) ? n.link : "#"}
+                  className="block w-full text-left px-4 py-3 transition-colors border-b"
                   style={
                     !n.read
                       ? {
@@ -136,8 +137,9 @@ export function NotificationBell({ scrolled }: NotificationBellProps) {
                         }
                   }
                   onClick={() => {
-                    if (!n.read) markAsRead(n.id);
-                    if (n.link) window.location.href = n.link;
+                    if (!n.read) {
+                      markAsRead(n.id);
+                    }
                     setOpen(false);
                   }}
                 >
@@ -214,7 +216,7 @@ export function NotificationBell({ scrolled }: NotificationBellProps) {
                       </span>
                     </div>
                   </div>
-                </button>
+                </Link>
               ))
             )}
           </div>

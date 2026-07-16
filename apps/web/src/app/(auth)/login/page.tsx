@@ -92,10 +92,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className={`btn btn-primary w-full ${loading ? "loading" : ""}`}
+              className="btn btn-primary w-full"
               disabled={loading}
             >
-              Sign In
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : "Sign In"}
             </button>
           </form>
 

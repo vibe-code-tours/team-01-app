@@ -16,10 +16,11 @@ interface ToastContainerProps {
 }
 
 function getToastColor(type: string) {
-  if (type.includes("cancel")) return "alert-error";
-  if (type.includes("approved")) return "alert-success";
-  if (type.includes("created") || type.includes("purchased")) return "alert-info";
-  return "alert-warning";
+  if (type.includes("cancel") || type.includes("rejected")) return "bg-red-50 border border-red-200 text-red-800";
+  if (type.includes("approved") || type.includes("delivered") || type.includes("subscription_approved")) return "bg-emerald-50 border border-emerald-200 text-emerald-800";
+  if (type.includes("created") || type.includes("purchased") || type.includes("order_created")) return "bg-sky-50 border border-sky-200 text-sky-800";
+  if (type.includes("status_changed") || type.includes("assigned")) return "bg-amber-50 border border-amber-200 text-amber-800";
+  return "bg-gray-50 border border-gray-200 text-gray-800";
 }
 
 export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
@@ -46,7 +47,7 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
             )}
           </div>
           <button
-            className="btn btn-ghost btn-xs"
+            className="text-current opacity-50 hover:opacity-100 transition-opacity p-1"
             onClick={() => onRemove(toast.id)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
