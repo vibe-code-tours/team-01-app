@@ -75,6 +75,32 @@ rejected cancelled
 - Only `pending` and `scheduled` coupon deliveries can be cancelled
 - Backend validates all transitions — invalid transitions return 400
 
+**User Flow (Retail Order):**
+1. User places order → status: `pending`
+2. User uploads payment proof → status stays `pending`
+3. User clicks "Confirm Payment" → status changes to `paid`
+4. Admin reviews and approves → status changes to `approved`
+5. User books delivery slot → status changes to `scheduled`
+6. Admin assigns to delivery person → status changes to `assigned`
+7. Delivery person marks delivered → status changes to `delivered`
+
+**User Flow (Subscription Purchase):**
+1. User selects subscription package → order created → status: `pending`
+2. User uploads payment proof → status: `paid`
+3. Admin approves → coupons issued to user → status: `approved` (terminal)
+4. User uses coupons to order 20L bottles (separate coupon-delivery orders)
+
+**User Flow (Coupon Delivery):**
+1. User selects schedule and enters delivery details → order created → status: `scheduled`
+2. Admin assigns to delivery person → status: `assigned`
+3. Delivery person marks delivered → status: `delivered`
+
+**Cancellation Policy:**
+- Retail orders: User can cancel while in `pending` status only
+- Coupon deliveries: User can cancel while in `pending` or `scheduled` status
+- Once `assigned` or `delivered`, order cannot be cancelled by user
+- Admin can cancel any order that is not `delivered`
+
 ---
 
 ## API Endpoints
