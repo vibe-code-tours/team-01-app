@@ -2,7 +2,7 @@
 
 ## Overview
 
-Water delivery management system with manual payment approval workflow. MVP delivered as PWA (mobile-first), future Flutter mobile app.
+Water delivery management system (Yay Thal Pya Zat) with manual payment approval workflow. PWA (mobile-first) with real-time notifications via Socket.IO.
 
 ---
 
@@ -10,9 +10,9 @@ Water delivery management system with manual payment approval workflow. MVP deli
 
 | Party | Description |
 |-------|-------------|
-| **Admin** | System administrator with role-based access |
+| **Admin** | System administrator with role-based access (super-admin, admin) |
 | **User** | Customer who buys products/subscriptions |
-| **Delivery Person** | Delivers orders, limited dashboard access |
+| **Delivery Person** | Delivers orders, has limited dashboard at `/delivery` |
 
 ---
 
@@ -26,17 +26,54 @@ Water delivery management system with manual payment approval workflow. MVP deli
 | 1L Water | 12 bottles |
 | 1.5L Water | 12 bottles |
 | Water Pump | Single unit |
-| Stainless Bottle | Various sizes |
+| Stainless Bottle 500ml | 500ml |
+| Stainless Bottle 1L | 1L |
 
 ### Subscriptions (20L Bottles Only)
-| Package | Coupons |
-|---------|---------|
-| Starter | 5 coupons |
-| Regular | 12 coupons |
-| Premium | 24 coupons |
+| Package | Coupons | Price |
+|---------|---------|-------|
+| Starter | 5 coupons | 50,000 MMK |
+| Regular | 12 coupons | 100,000 MMK |
+| Premium | 24 coupons | 180,000 MMK |
 
 > 1 coupon = 1 bottle of 20L water
-> Subscription orders start at `approved` status — no payment proof needed
+
+---
+
+## Order Status Flow
+
+### Retail / Coupon Delivery
+```
+pending → paid → approved → scheduled → assigned → delivered
+   ↓        ↓       ↓           ↓           ↓
+rejected cancelled cancelled  cancelled  cancelled
+```
+
+### Subscription
+```
+pending → paid → approved (terminal — coupons issued)
+   ↓        ↓
+rejected cancelled
+```
+
+**Status definitions:**
+| Status | Description |
+|--------|-------------|
+| `pending` | Order placed, awaiting user payment proof |
+| `paid` | User uploaded proof + confirmed, awaiting admin |
+| `approved` | Admin verified payment (or subscription approved) |
+| `rejected` | Payment rejected (user can re-upload) |
+| `scheduled` | User booked delivery slot (after admin approval) |
+| `assigned` | Admin assigned to delivery person |
+| `delivered` | Delivery person marked completed |
+| `cancelled` | Cancelled by user |
+
+**Key rules:**
+- User schedules delivery AFTER admin approval (not admin)
+- Admin cannot transition `approved → scheduled` (user does this)
+- Subscription orders: terminal at `approved` (no schedule/assign)
+- Only `pending` and `scheduled` coupon deliveries can be cancelled
+- Backend validates all transitions — invalid transitions return 400
 
 ---
 
@@ -46,453 +83,243 @@ Water delivery management system with manual payment approval workflow. MVP deli
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/api/auth/sign-up/email` | Register with email/password | No |
-| POST | `/api/auth/sign-in/email` | Login with email/password | No |
-| POST | `/api/auth/sign-out` | Sign out (invalidate session) | Yes |
-| GET | `/api/auth/get-session` | Get current session + user + coupons | Yes |
-| POST | `/api/auth/update-user` | Update user profile | Yes |
-| POST | `/api/auth/change-password` | Change password | Yes |
-| POST | `/api/auth/passkey/register` | Register passkey (WebAuthn) | Yes |
-| POST | `/api/auth/passkey/authenticate` | Login with passkey | No |
-| POST | `/api/auth/authenticator/enable` | Enable TOTP authenticator | Yes |
-| POST | `/api/auth/authenticator/verify` | Verify TOTP code | Yes |
-| POST | `/api/auth/authenticator/disable` | Disable authenticator | Yes |
+| POST | `/api/auth/sign-up/email` | Register | No |
+| POST | `/api/auth/sign-in/email` | Login | No |
+| POST | `/api/auth/sign-out` | Sign out | Yes |
+| GET | `/api/auth/get-session` | Get session | Yes |
 
-**better-auth handles:**
-- JWT session management
-- Password hashing (bcrypt)
-- Passkey (WebAuthn/FIDO2)
-- Authenticator (TOTP)
-- Role-based access via middleware
-
-### Users (Admin)
+### Admin — Stats
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/admin/users` | List all users | Admin |
+| GET | `/api/admin/stats` | Dashboard statistics | Admin |
+| GET | `/api/admin/me` | Current admin info | Admin |
+
+### Admin — Users
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/users` | List users (paginated, searchable) | Admin |
 | GET | `/api/admin/users/:id` | Get user details | Admin |
-| PUT | `/api/admin/users/:id` | Update user | Admin |
-| PUT | `/api/admin/users/:id/status` | Enable/disable user | Admin |
-| GET | `/api/admin/users/:id/orders` | Get user orders | Admin |
+| POST | `/api/admin/users` | Create user | Super Admin |
+| PATCH | `/api/admin/users/:id` | Update user | Super Admin |
+| DELETE | `/api/admin/users/:id` | Suspend user | Super Admin |
 
-### Products (Admin)
+### Admin — Products
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/admin/products` | List all products | Admin |
-| POST | `/api/admin/products` | Create product | Admin |
+| GET | `/api/admin/products` | List products (paginated, filterable) | Admin |
 | GET | `/api/admin/products/:id` | Get product details | Admin |
-| PUT | `/api/admin/products/:id` | Update product | Admin |
-| DELETE | `/api/admin/products/:id` | Delete product | Admin |
-| PATCH | `/api/admin/products/:id/status` | Enable/disable product | Admin |
+| POST | `/api/admin/products` | Create product | Super Admin |
+| PATCH | `/api/admin/products/:id` | Update product | Super Admin |
+| POST | `/api/admin/products/:id/image` | Upload product image | Super Admin |
+| DELETE | `/api/admin/products/:id` | Deactivate product | Super Admin |
 
-### Products (Public)
+### Admin — Orders
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/orders` | List orders (filterable by status/type) | Admin |
+| GET | `/api/admin/orders/:id` | Get order details | Admin |
+| PATCH | `/api/admin/orders/:id` | Update status (with transition validation) | Admin |
+| GET | `/api/admin/delivery-persons` | List delivery persons | Admin |
+| POST | `/api/admin/assignments/bulk` | Bulk assign orders to delivery person | Admin |
+| GET | `/api/admin/assignable` | List orders ready for assignment | Admin |
+| GET | `/api/admin/assigned/:dpId` | List orders assigned to delivery person | Admin |
+| PATCH | `/api/admin/orders/:id/deliver` | Mark as delivered | Delivery |
+
+### Admin — Subscriptions
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/subscriptions` | List user subscriptions | Admin |
+| GET | `/api/admin/subscriptions/:id` | Get subscription details | Admin |
+
+### Admin — Subscription Packages
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/subscription-packages` | List packages | Admin |
+| GET | `/api/admin/subscription-packages/:id` | Get package details | Admin |
+| POST | `/api/admin/subscription-packages` | Create package | Super Admin |
+| PATCH | `/api/admin/subscription-packages/:id` | Update package | Super Admin |
+| DELETE | `/api/admin/subscription-packages/:id` | Delete package | Super Admin |
+
+### Admin — Locations
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/provinces` | List provinces | Admin |
+| POST | `/api/admin/provinces` | Create province | Super Admin |
+| PATCH | `/api/admin/provinces/:id` | Update province | Super Admin |
+| DELETE | `/api/admin/provinces/:id` | Delete province | Super Admin |
+| GET | `/api/admin/townships` | List townships | Admin |
+| POST | `/api/admin/townships` | Create township | Super Admin |
+| PATCH | `/api/admin/townships/:id` | Update township | Super Admin |
+| DELETE | `/api/admin/townships/:id` | Delete township | Super Admin |
+
+### Admin — Schedules
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/admin/schedules` | List schedules | Admin |
+| GET | `/api/admin/schedules/:id` | Get schedule details | Admin |
+| POST | `/api/admin/schedules` | Create schedule (multi-date, multi-township) | Super Admin |
+| PATCH | `/api/admin/schedules/:id` | Update schedule | Super Admin |
+| DELETE | `/api/admin/schedules/:id` | Delete schedule | Super Admin |
+
+### Public — Products
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/api/products` | List active products | No |
 | GET | `/api/products/:id` | Get product details | No |
 
-### Subscriptions (Admin)
+### Public — Subscription Packages
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/admin/subscriptions` | List all subscription packages | Admin |
-| POST | `/api/admin/subscriptions` | Create subscription package | Admin |
-| GET | `/api/admin/subscriptions/:id` | Get package details | Admin |
-| PUT | `/api/admin/subscriptions/:id` | Update package | Admin |
-| DELETE | `/api/admin/subscriptions/:id` | Delete package | Admin |
+| GET | `/api/subscription-packages` | List active packages | No |
+| GET | `/api/subscription-packages/:id` | Get package details | No |
 
-### Subscriptions (Public)
+### Public — Locations
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/subscriptions` | List active subscription packages | No |
-| GET | `/api/subscriptions/:id` | Get package details | No |
+| GET | `/api/provinces/list` | List active provinces | No |
+| GET | `/api/townships-by-province/:id` | List townships for province | No |
 
-### Subscriptions (User)
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/user/subscriptions` | List my subscriptions | Yes |
-| POST | `/api/user/subscriptions/purchase` | Purchase subscription package | Yes |
-| GET | `/api/user/subscriptions/:id` | Get subscription details + remaining coupons | Yes |
-
-### Orders (Admin)
+### User — Profile
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/admin/orders` | List all orders | Admin |
-| GET | `/api/admin/orders/:id` | Get order details | Admin |
-| PUT | `/api/admin/orders/:id` | Update order status | Admin |
-| PATCH | `/api/admin/orders/:id/assign` | Assign delivery person | Admin |
-| PATCH | `/api/admin/orders/:id/approve-payment` | Approve manual payment | Admin |
-| PATCH | `/api/admin/orders/:id/reject-payment` | Reject payment proof | Admin |
+| GET | `/api/user/profile` | Get my profile | Yes |
+| PATCH | `/api/user/profile` | Update my profile | Yes |
 
-### Orders (User)
+### User — Orders
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | GET | `/api/user/orders` | List my orders | Yes |
-| POST | `/api/user/orders` | Create order | Yes |
 | GET | `/api/user/orders/:id` | Get order details | Yes |
-| POST | `/api/user/orders/:id/payment` | Upload payment proof | Yes |
-| POST | `/api/user/orders/:id/cancel` | Cancel order (before delivered) | Yes |
+| POST | `/api/user/orders` | Create retail order (from cart) | Yes |
+| PATCH | `/api/user/orders/:id` | Update status (confirm payment / cancel) | Yes |
+| POST | `/api/user/orders/:id/payment-proof` | Upload payment proof image | Yes |
+| POST | `/api/user/orders/:orderId/schedule` | Book delivery slot | Yes |
 
-### Location Management (Admin)
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/admin/provinces` | List all provinces | Admin |
-| POST | `/api/admin/provinces` | Create province | Admin |
-| PUT | `/api/admin/provinces/:id` | Update province | Admin |
-| DELETE | `/api/admin/provinces/:id` | Delete province | Admin |
-| GET | `/api/admin/provinces/:id/townships` | List townships in province | Admin |
-| POST | `/api/admin/provinces/:id/townships` | Create township | Admin |
-| PUT | `/api/admin/townships/:id` | Update township | Admin |
-| DELETE | `/api/admin/townships/:id` | Delete township | Admin |
-
-### Delivery Schedule (Admin)
+### User — Subscriptions
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/admin/schedules` | List delivery schedules | Admin |
-| POST | `/api/admin/schedules` | Create schedule | Admin |
-| PUT | `/api/admin/schedules/:id` | Update schedule | Admin |
-| DELETE | `/api/admin/schedules/:id` | Delete schedule | Admin |
+| GET | `/api/user/subscriptions` | List my subscriptions | Yes |
+| GET | `/api/user/subscriptions/:id` | Get subscription details | Yes |
+| POST | `/api/user/subscriptions/purchase` | Purchase subscription | Yes |
 
-**Schedule creation payload:**
-```json
-{
-  "province_id": "uuid",
-  "date": "2026-07-10",
-  "time_start": "09:00",
-  "time_end": "12:00",
-  "max_orders": 50,
-  "is_province_wide": true,
-  "township_ids": ["uuid1", "uuid2"] // used when is_province_wide = false
-}
-```
-
-**Scheduling Logic:**
-- If `is_province_wide = true`: schedule applies to ALL townships in the province
-- If `is_province_wide = false`: schedule only applies to selected `township_ids`
-- When user queries available slots, they must provide both `province_id` and `township_id`
-- System returns schedules that match: province-wide OR specific township
-
-### Delivery Schedule (User)
+### User — Coupon Deliveries
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/user/schedules/available?province_id=&township_id=` | Get available slots (with remaining capacity) | Yes |
-| POST | `/api/user/orders/:id/schedule` | Book delivery slot (validates max_orders) | Yes |
+| GET | `/api/user/coupon-deliveries` | List my coupon deliveries | Yes |
+| GET | `/api/user/coupon-deliveries/:id` | Get delivery details | Yes |
+| POST | `/api/user/coupon-deliveries` | Create coupon delivery (uses coupons) | Yes |
+| PATCH | `/api/user/coupon-deliveries/:id` | Cancel delivery | Yes |
 
-**Schedule Booking Validation:**
-- Check schedule not fully booked (`current_orders < max_orders`)
-- Auto-increment `current_orders` on successful booking
-
-**User schedule booking payload:**
-```json
-{
-  "schedule_id": "uuid",
-  "township_id": "uuid",
-  "delivery_address": "123 Street",
-  "contact_phone": "09xxxxxxxxx",
-  "notes": "Leave at gate"
-}
-```
-
-### Delivery Persons (Admin)
+### User — Schedules
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/admin/delivery-persons` | List all delivery persons | Admin |
-| POST | `/api/admin/delivery-persons` | Create delivery person | Admin |
-| GET | `/api/admin/delivery-persons/:id` | Get details | Admin |
-| PUT | `/api/admin/delivery-persons/:id` | Update delivery person | Admin |
-| DELETE | `/api/admin/delivery-persons/:id` | Delete delivery person | Admin |
-| GET | `/api/admin/delivery-persons?province_id=` | Filter by province | Admin |
+| GET | `/api/user/schedules` | Get available delivery slots | Yes |
 
-### Delivery Person (Shared Admin Dashboard)
-
-Delivery person uses same admin endpoints with role middleware:
+### User — Notifications
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/api/admin/orders?assigned_to=me` | List my assigned orders | Delivery |
-| GET | `/api/admin/orders/:id` | Get order details | Delivery |
-| PATCH | `/api/admin/orders/:id/delivered` | Mark as delivered | Delivery |
+| GET | `/api/user/notifications` | List notifications | Yes |
+| GET | `/api/user/notifications/unread-count` | Get unread count | Yes |
+| PATCH | `/api/user/notifications/:id/read` | Mark as read | Yes |
+| PATCH | `/api/user/notifications/read-all` | Mark all as read | Yes |
 
-**Routing:**
-- Same `/api/admin/*` routes
-- Role middleware checks access per route
-- Delivery person: only orders endpoint, read + mark delivered only
-- Admin: full access to all endpoints
+---
 
-**Delivery Person Login:**
-- Uses same `/api/auth/sign-in/email` endpoint
-- Role: `delivery`
-- Shares admin dashboard with limited access
+## Real-Time (Socket.IO)
 
-### Dashboard (Admin)
+### Connection
+- Client connects via `/api/socket-io/` (Next.js proxy → API server)
+- Auth: `auth: { token }` — session token from `GET /api/auth/socket-token`
+- Transport: polling (with upgrade attempt)
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| GET | `/api/admin/dashboard/stats` | Get dashboard statistics | Admin |
-| GET | `/api/admin/dashboard/revenue` | Get revenue report | Admin |
-| GET | `/api/admin/dashboard/orders-summary` | Get orders summary | Admin |
+### Server Events
+
+| Event | Target | Payload | Trigger |
+|-------|--------|---------|---------|
+| `notification:new` | `user:{userId}` | Notification object | Any notification created |
+| `order:status-changed` | `user:{userId}` | `{ orderId }` | Order status changes |
+| `order:new` | `admins` | `{ orderId, type }` | New order placed |
+| `order:status-changed` | `admins` | `{ orderId, status }` | Order status changes |
+| `delivery:new` | `admins` | `{ count }` | Orders assigned |
+| `delivery:status-changed` | `admins` | `{ orderId, status }` | Delivery completed |
+
+### Rooms
+- `user:{userId}` — each user gets their own room
+- `admins` — all admin users join this room
 
 ---
 
 ## Features
 
-### Admin Features
+### Admin
 
-#### Dashboard
-- Total orders (pending, approved, delivered)
-- Total revenue
-- Active users
-- Pending payments to review
-- Recent orders
+- **Dashboard**: Stats (users, orders, revenue, subscriptions), recent orders
+- **Order Management**: List/filter orders, approve/reject/cancel, view details
+- **Assignment Panel**: Filter by province/township, multi-select orders, bulk assign to delivery person
+- **Product Management**: CRUD with image upload
+- **Subscription Package Management**: CRUD
+- **Schedule Management**: Create multi-date, multi-township schedules
+- **User Management**: CRUD, suspend
+- **Real-time**: Toast notifications for new orders and status changes
 
-#### Product Management (CRUD)
-- Create/edit/delete products
-- Set product name, description, price, pack size
-- Upload product images
-- Enable/disable products
-- Manage stock status
+### User
 
-#### Subscription Management (CRUD)
-- Create/edit/delete subscription packages
-- Set coupon count and price
-- Enable/disable packages
-- View subscription holders and their remaining coupons
+- **Dashboard**: Coupons, pending deliveries, order count, recent orders
+- **Product Browsing**: Filter by type (bottles, dispensers, retail)
+- **Cart & Checkout**: Add to cart, place order
+- **Payment**: Upload proof, confirm payment
+- **Scheduling**: Select delivery slot after admin approval
+- **Subscription**: Purchase plans, view coupons
+- **Coupon Delivery**: Use coupons for 20L bottle delivery
+- **Notifications**: Bell icon with unread count, mark as read
+- **Real-time**: Auto-refresh orders on status changes
 
-#### Order Management
-- View all orders with filters (status, date, user)
-- Approve/reject payment proofs
-- Assign orders to delivery persons (filtered by order's province)
-- Update order status (pending → paid → approved → scheduled → assigned → delivered)
-- View order history
+### Delivery Person
 
-#### User Management
-- View all registered users
-- View user order history
-- Enable/disable user accounts
-- View user details
-
-#### Delivery Schedule Management
-- CRUD provinces and townships
-- Create delivery schedules:
-  - **Province-wide**: all townships under province share the schedule
-  - **Township-specific**: select one or more townships
-- Set date, time range, and max orders per schedule
-- View scheduled deliveries per date/province
-
-#### Delivery Person Management
-- CRUD delivery persons (name, phone, phone, province)
-- Assign orders to delivery persons
-- View delivery person's assigned orders
-- Track delivery completion
+- **Dashboard** (`/delivery`): View assigned orders, stats
+- **Actions**: Mark order as delivered
 
 ---
 
-### Delivery Person Features
+## Database Schema
 
-#### Dashboard (Limited)
-- View only assigned orders
-- Order list with status, customer info, delivery address
-- Filter by: pending delivery, delivered today
-
-#### Order Actions
-- View order details (items, address, contact phone)
-- Mark order as delivered
-- Cannot access: products, users, payments, schedules, other orders
-
----
-
-### User Features
-
-#### Authentication
-- Register with: name, email, phone, address, province, township
-- Login methods:
-  - Email/password
-  - Passkey (WebAuthn — fingerprint, Face ID, security key)
-  - Authenticator app (Google Authenticator, Authy)
-- Session management (via better-auth)
-- Profile management
-
-#### Product Browsing
-- View all active products
-- View product details (name, price, description, pack size)
-- Filter by category
-
-#### Shopping
-- Add products to cart
-- Select quantity
-- Place order
-- Order summary before checkout
-
-#### Subscription Purchase
-- View active subscription packages (5, 12, 24 coupons)
-- Purchase subscription via manual payment
-- Remaining coupons available in `/api/auth/me` response
-- Use coupon to order 20L bottle
-
-#### Payment (Manual)
-- Upload payment proof (screenshot/image)
-- Enter transaction details (bank, account, amount)
-- View payment status (pending, approved, rejected)
-- Re-upload if rejected with notes
-
-#### Delivery Scheduling
-- Select province → township
-- View available delivery slots for that area
-- Select date and time range
-- Confirm schedule
-- View upcoming delivery
-
-#### Order History
-- View past orders
-- Order status tracking
-- Download receipts
-
----
-
-## Order Status Flow
-
-### Retail Order (manual payment)
-```
-┌─────────┐    ┌─────────┐    ┌────────────┐    ┌────────────┐    ┌──────────┐    ┌──────────┐
-│ Pending │ →  │  Paid   │ →  │  Approved  │ →  │  Scheduled │ →  │ Assigned │ →  │ Delivered│
-└─────────┘    └─────────┘    └────────────┘    └────────────┘    └──────────┘    └──────────┘
-                     │              │
-                     ↓              ↓
-                ┌─────────┐   ┌──────────┐
-                │Rejected │   │ Cancelled│
-                └─────────┘   └──────────┘
-```
-
-### Subscription Order (coupon-based)
-```
-┌─────────┐    ┌─────────┐    ┌──────────┐    ┌────────────┐    ┌──────────┐    ┌──────────┐
-│ Pending │ →  │  Paid   │ →  │ Approved │ →  │  Scheduled │ →  │ Assigned │ →  │ Delivered│
-└─────────┘    └─────────┘    └──────────┘    └────────────┘    └──────────┘    └──────────┘
-                     │              │              │
-                     ↓              ↓              ↓
-                ┌─────────┐   ┌──────────┐   ┌──────────┐
-                │Rejected │   │ Cancelled│   │ Cancelled│
-                └─────────┘   └──────────┘   └──────────┘
-```
-
-**Status Definitions:**
-- `pending` — Order placed, awaiting user to upload payment proof and confirm
-- `paid` — User confirmed payment (uploaded proof + clicked "Confirm Payment"), awaiting admin approval
-- `approved` — Payment verified by admin (or subscription order using coupon)
-- `rejected` — Payment rejected by admin (user can re-upload proof)
-- `scheduled` — Delivery date/time booked by user
-- `assigned` — Assigned to delivery person by admin
-- `delivered` — Delivery person marked as completed
-- `cancelled` — Order cancelled by user
-
-**User Flow (Retail Order):**
-1. User places order → status: `pending`
-2. User uploads payment proof → status stays `pending`
-3. User clicks "Confirm Payment" → status changes to `paid`
-4. Admin reviews and approves → status changes to `approved`
-5. User books delivery slot → status changes to `scheduled`
-
-**Note:** Subscription orders (coupon-based) start at `approved` since payment was already made when purchasing subscription.
-
-**Cancellation Policy:** User can cancel order while in `pending` status only. Once payment is confirmed (`paid`), order cannot be cancelled by user.
-
----
-
-## Database Entities
-
-### Core Tables
-
-- **users** — id, name, email, phone, address, province_id, township_id, role, status, password_hash, created_at, updated_at
-- **products** — id, name, description, price, type (retail/subscription/pump/bottle), pack_size, image_url, status, created_at, updated_at
-- **subscription_packages** — id, name, coupon_count, price, description, status, created_at, updated_at
-- **orders** — id, user_id, order_type (retail/subscription), total_amount, status, payment_proof_url, payment_details, admin_notes, created_at, updated_at
+### Core
+- **users** — id, name, email, phone, address, province_id, township_id, role, status
+- **products** — id, name, description, price, type, pack_size, image_url, status
+- **subscription_packages** — id, name, coupon_count, price, description, status
+- **orders** — id, user_id, order_type, total_amount, status, payment_proof_url, payment_details, bottle_count, admin_notes, delivery_person_id, assigned_at
 - **order_items** — id, order_id, product_id, quantity, unit_price, subtotal
-- **subscriptions** — id, user_id, package_id, coupons_remaining, status, created_at, expires_at
+- **subscriptions** — id, user_id, package_id, coupons_remaining, expires_at
 
-### Location Tables
+### Location
+- **provinces** — id, name, is_active
+- **townships** — id, province_id, name, is_active
 
-- **provinces** — id, name, is_active, created_at
-- **townships** — id, province_id, name, is_active, created_at
+### Delivery
+- **schedules** — id, province_id, date, time_start, time_end, max_orders, current_orders, is_province_wide
+- **schedule_townships** — schedule_id, township_id
+- **order_schedules** — order_id, schedule_id, township_id, delivery_address, contact_phone, notes
+- **delivery_persons** — id, user_id, name, phone, province_id, status
 
-### Delivery Schedule Tables
-
-- **schedules** — id, province_id, date, time_start, time_end, max_orders, current_orders, is_province_wide, created_at
-- **schedule_townships** — id, schedule_id, townships_id (linked when is_province_wide = false)
-- **order_schedules** — id, order_id, schedule_id, townships_id, delivery_address, contact_phone, notes
-
-### Delivery Person Tables
-
-- **delivery_persons** — id, user_id, name, phone, province_id, status, created_at
-- **order_assignments** — id, order_id, delivery_person_id, assigned_at, delivered_at, status
-
----
-
-## Order Workflow
-
-### Retail Order
-1. User places order → status: `pending`
-2. User uploads payment proof → status: `paid`
-3. Admin reviews proof:
-   - Approve → status: `approved`
-   - Reject → status: `rejected` (with reason)
-4. If rejected, user re-uploads → status: `paid` again
-5. If approved, user schedules delivery → status: `scheduled`
-6. Admin assigns to delivery person → status: `assigned`
-7. Delivery person marks delivered → status: `delivered`
-
-### Subscription Order (coupon-based)
-1. User selects subscription package → order created → status: `pending`
-2. User uploads payment proof → status: `paid`
-3. Admin approves payment → coupons issued → status: `approved`
-4. User orders 20L bottle using coupon → status: `approved` (already paid)
-5. User schedules delivery → status: `scheduled`
-6. Admin assigns to delivery person → status: `assigned`
-7. Delivery person marks delivered → status: `delivered`
-
----
-
-## MVP Scope (PWA)
-
-| Feature | Priority |
-|---------|----------|
-| User auth (register/login) | P0 |
-| Passkey authentication | P0 |
-| Authenticator (TOTP) | P1 |
-| Product listing | P0 |
-| Shopping cart | P0 |
-| Order placement | P0 |
-| Payment proof upload | P0 |
-| Admin order management | P0 |
-| Payment approval workflow | P0 |
-| Delivery scheduling (province/township) | P0 |
-| Dashboard (admin) | P0 |
-| Delivery person management | P0 |
-| Delivery person limited dashboard | P0 |
-| Mark order as delivered | P0 |
-| Subscription purchase | P0 |
-| Order history | P1 |
-| Responsive mobile UI | P0 |
-
----
-
-## Future Enhancements (Flutter + Real-time)
-
-- Separate Flutter mobile app
-- Real-time order assignment with push notifications
-- Route optimization
-- Delivery photo proof
-- Live delivery tracking
-- Multi-language support
+### Notifications
+- **notifications** — id, user_id, type, title, message, entity_type, entity_id, link, read, created_at
 
 ---
 
@@ -506,10 +333,9 @@ Delivery person uses same admin endpoints with role middleware:
 | Database | PostgreSQL 16 |
 | Cache | Redis 7 |
 | Real-time | Socket.IO v4 |
-| Auth | better-auth (JWT + Passkey + TOTP) |
+| Auth | better-auth (JWT) |
 | Runtime | Node.js 22 |
-| PWA | next-pwa |
-| Future Mobile | Flutter |
+| Brand | YTPZ Brand Guide v1.0 |
 
 ---
 
@@ -517,33 +343,29 @@ Delivery person uses same admin endpoints with role middleware:
 
 ```
 apps/api/src/
-├── index.ts              # Mount all routers
+├── index.ts              # Mount all routers + Socket.IO
+├── config/env.ts         # Environment variables
 ├── lib/
-│   └── auth.ts           # better-auth config
+│   ├── auth.ts           # better-auth config
+│   ├── io.ts             # Socket.IO instance getter
+│   └── notifications.ts  # Notification + socket emission helpers
 ├── middleware/
 │   ├── auth.ts           # Session verification
-│   └── role.ts           # Role check (admin, user, delivery)
-└── routes/
-    ├── auth.ts           # /api/auth/* (public)
-    ├── products.ts       # /api/products/* (public)
-    ├── subscriptions.ts  # /api/subscriptions/* (public)
-    └── admin/
-        ├── index.ts      # /api/admin/* (role guard)
-        ├── users.ts      # admin only
-        ├── products.ts   # admin only
-        ├── orders.ts     # admin + delivery (role check inside)
-        ├── subscriptions.ts  # admin only
-        ├── schedules.ts  # admin only
-        ├── provinces.ts  # admin only
-        └── dashboard.ts  # admin only
-```
-
-**Role middleware pattern:**
-```ts
-// Apply to entire admin router
-admin.use("*", roleGuard("admin", "delivery"));
-
-// Or per-route for mixed access
-orders.get("/", roleGuard("admin", "delivery"), handler);
-users.get("/", roleGuard("admin"), handler);  // admin only
+│   └── error.ts          # Error handler
+├── routes/
+│   ├── admin.ts          # /api/admin/stats, /me, /users (CRUD)
+│   ├── products.ts       # /api/admin/products (CRUD + image upload)
+│   ├── orders.ts         # /api/admin/orders, assignments, delivery
+│   ├── subscriptions.ts  # /api/admin/subscriptions
+│   ├── subscription-packages.ts  # /api/admin/subscription-packages
+│   ├── provinces.ts      # /api/admin/provinces
+│   ├── townships.ts      # /api/admin/townships
+│   ├── schedules.ts      # /api/admin/schedules
+│   ├── public.ts         # /api/products, subscription-packages, locations (no auth)
+│   ├── user.ts           # /api/user/profile
+│   ├── user-orders.ts    # /api/user/orders, payment-proof, schedule
+│   ├── user-coupon-deliveries.ts  # /api/user/coupon-deliveries
+│   └── notifications.ts  # /api/user/notifications
+└── ws/
+    └── index.ts          # Socket.IO setup (auth middleware, room joins)
 ```
