@@ -29,6 +29,10 @@ export async function createAndEmitNotification(
   try {
     const io = getIO();
     io.to(`user:${params.userId}`).emit("notification:new", notification);
+    // Also emit status-changed event so user pages can refresh
+    if (params.type === "order_status_changed" || params.type === "delivery_status_changed" || params.type === "subscription_approved") {
+      io.to(`user:${params.userId}`).emit("order:status-changed", { orderId: params.entityId });
+    }
   } catch {
     // Socket.IO may not be available (e.g. Vercel serverless)
   }

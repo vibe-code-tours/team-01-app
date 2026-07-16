@@ -80,11 +80,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const markAsRead = useCallback(async (id: string) => {
-    await userFetch(`/notifications/${id}/read`, { method: "PATCH" });
+    // Optimistic update — update state immediately
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
+    // Then sync to server
+    await userFetch(`/notifications/${id}/read`, { method: "PATCH" });
   }, []);
 
   const markAllAsRead = useCallback(async () => {
