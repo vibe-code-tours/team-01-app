@@ -4,6 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { adminFetch } from "@/lib/api-client";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import {
+  getAllowedTransitions,
+  getActionConfig,
+  getProgressSteps,
+  getProgressIndex,
+  isTerminalStatus,
+} from "@/lib/order-status";
 
 interface OrderItem {
   id: string;
@@ -49,9 +56,6 @@ interface OrderDetail {
   scheduleInfo: ScheduleInfo | null;
 }
 
-const RETAIL_STATUSES = ["pending", "paid", "approved", "rejected", "scheduled", "assigned", "delivered", "cancelled"];
-const COUPON_STATUSES = ["pending", "assigned", "delivered", "cancelled"];
-
 const orderTypeLabels: Record<string, string> = {
   retail: "Retail",
   subscription: "Subscription",
@@ -64,7 +68,6 @@ export default function OrderDetailPage() {
   const id = params.id as string;
 
   const [order, setOrder] = useState<OrderDetail | null>(null);
-  const [status, setStatus] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [deliveryPersons, setDeliveryPersons] = useState<DeliveryPerson[]>([]);
   const [selectedDP, setSelectedDP] = useState("");
@@ -73,15 +76,19 @@ export default function OrderDetailPage() {
   const [message, setMessage] = useState("");
   const [messageSuccess, setMessageSuccess] = useState(false);
 
+  // Confirmation modal state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState("");
+  const [confirmReason, setConfirmReason] = useState("");
+
   const isCouponDelivery = order?.orderType === "coupon-delivery";
-  const statuses = isCouponDelivery ? COUPON_STATUSES : RETAIL_STATUSES;
+  const allowed = order ? getAllowedTransitions(order.status, order.orderType) : [];
 
   const loadOrder = useCallback(async () => {
     const result = await adminFetch<OrderDetail>(`/orders/${id}`);
     if (result.success && result.data) {
       const o = result.data;
       setOrder(o);
-      setStatus(o.status);
       setAdminNotes(o.adminNotes || "");
     }
     setLoading(false);
@@ -99,17 +106,27 @@ export default function OrderDetailPage() {
     loadDeliveryPersons();
   }, [loadOrder, loadDeliveryPersons]);
 
-  async function handleUpdate(e: React.FormEvent) {
-    e.preventDefault();
+  function handleActionClick(targetStatus: string) {
+    const config = getActionConfig(targetStatus);
+    if (config.requiresConfirmation) {
+      setConfirmAction(targetStatus);
+      setConfirmReason("");
+      setConfirmOpen(true);
+    } else {
+      submitStatusChange(targetStatus);
+    }
+  }
+
+  async function submitStatusChange(newStatus: string, reason?: string) {
     setSaving(true);
     setMessage("");
 
-    const body: Record<string, string> = {};
-    if (order && status !== order.status) body.status = status;
+    const body: Record<string, string> = { status: newStatus };
     if (adminNotes !== (order?.adminNotes || "")) body.adminNotes = adminNotes;
-    if (isCouponDelivery && status === "assigned" && selectedDP) {
+    if (isCouponDelivery && newStatus === "assigned" && selectedDP) {
       body.deliveryPersonId = selectedDP;
     }
+    if (reason) body.adminNotes = reason;
 
     const result = await adminFetch(`/orders/${id}`, {
       method: "PATCH",
@@ -118,12 +135,32 @@ export default function OrderDetailPage() {
     });
 
     setSaving(false);
+    setConfirmOpen(false);
     if (result.success) {
       setMessage("Order updated successfully");
       setMessageSuccess(true);
       loadOrder();
     } else {
       setMessage(result.error || "Failed to update order");
+      setMessageSuccess(false);
+    }
+  }
+
+  async function handleNotesSave() {
+    setSaving(true);
+    setMessage("");
+    const result = await adminFetch(`/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminNotes }),
+    });
+    setSaving(false);
+    if (result.success) {
+      setMessage("Notes saved");
+      setMessageSuccess(true);
+      loadOrder();
+    } else {
+      setMessage(result.error || "Failed to save notes");
       setMessageSuccess(false);
     }
   }
@@ -143,6 +180,10 @@ export default function OrderDetailPage() {
     );
   }
 
+  const steps = getProgressSteps(order.orderType);
+  const progressIdx = getProgressIndex(order.status, order.orderType);
+  const terminal = isTerminalStatus(order.status, order.orderType);
+
   return (
     <div className="max-w-3xl animate-fade-in">
       <div className="flex items-center gap-3 mb-6">
@@ -153,6 +194,56 @@ export default function OrderDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900">{isCouponDelivery ? "Coupon Delivery" : "Order"} Detail</h1>
           <p className="text-sm text-gray-500 mt-0.5 font-mono text-xs">{order.id}</p>
         </div>
+      </div>
+
+      {/* Progress Stepper */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-4">
+        <div className="flex items-center justify-between">
+          {steps.map((step, i) => {
+            const isCompleted = progressIdx >= 0 && i <= progressIdx;
+            const isCurrent = i === progressIdx;
+            const isFuture = progressIdx >= 0 && i > progressIdx;
+            const isCancelled = order.status === "cancelled";
+            const isRejected = order.status === "rejected";
+
+            return (
+              <div key={step} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
+                    isCancelled || isRejected
+                      ? "bg-red-100 text-red-600"
+                      : isCompleted
+                        ? "bg-primary text-white"
+                        : isFuture
+                          ? "bg-gray-100 text-gray-400"
+                          : "bg-gray-100 text-gray-400"
+                  }`}>
+                    {isCompleted && !isCancelled && !isRejected ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    ) : (
+                      i + 1
+                    )}
+                  </div>
+                  <span className={`text-[10px] mt-1.5 font-medium capitalize whitespace-nowrap ${
+                    isCurrent ? "text-primary" : isCompleted ? "text-gray-700" : "text-gray-400"
+                  }`}>
+                    {step}
+                  </span>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 mt-[-18px] rounded ${
+                    isCompleted && i < progressIdx ? "bg-primary" : "bg-gray-100"
+                  }`}></div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {(order.status === "cancelled" || order.status === "rejected") && (
+          <div className="mt-3 text-center">
+            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-md capitalize">{order.status}</span>
+          </div>
+        )}
       </div>
 
       {/* Order Info */}
@@ -260,49 +351,85 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {/* Update Form */}
+      {/* Actions */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">Update Order</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-4">Actions</h2>
         {message && (
           <div className={`px-4 py-3 rounded-xl text-sm font-medium mb-4 ${messageSuccess ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
             {message}
           </div>
         )}
-        <form onSubmit={handleUpdate}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
-            <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" value={status} onChange={(e) => setStatus(e.target.value)}>
-              {statuses.map((s) => (
-                <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-              ))}
-            </select>
+
+        {terminal ? (
+          <p className="text-sm text-gray-500 mb-4">This order has reached a final status and cannot be changed.</p>
+        ) : (
+          <>
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {allowed.map((targetStatus) => {
+                const config = getActionConfig(targetStatus);
+                return (
+                  <button
+                    key={targetStatus}
+                    onClick={() => handleActionClick(targetStatus)}
+                    disabled={saving}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50 ${config.color}`}
+                  >
+                    {config.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Delivery person select for coupon-delivery assign */}
+            {isCouponDelivery && allowed.includes("assigned") && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Delivery Person</label>
+                <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" value={selectedDP} onChange={(e) => setSelectedDP(e.target.value)}>
+                  <option value="">Select delivery person</option>
+                  {deliveryPersons.map((dp) => (
+                    <option key={dp.id} value={dp.id}>{dp.name} ({dp.phone})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Admin notes (always editable) */}
+        {!isCouponDelivery && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Admin Notes</label>
+            <textarea className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" rows={3} value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} placeholder="Add notes about this order..." />
+            <button onClick={handleNotesSave} disabled={saving} className="mt-2 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all disabled:opacity-50">
+              Save Notes
+            </button>
           </div>
-
-          {isCouponDelivery && status === "assigned" && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Delivery Person</label>
-              <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" value={selectedDP} onChange={(e) => setSelectedDP(e.target.value)}>
-                <option value="">Select delivery person</option>
-                {deliveryPersons.map((dp) => (
-                  <option key={dp.id} value={dp.id}>{dp.name} ({dp.phone})</option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {!isCouponDelivery && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Admin Notes</label>
-              <textarea className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" rows={3} value={adminNotes} onChange={(e) => setAdminNotes(e.target.value)} placeholder="Add notes about this order..." />
-            </div>
-          )}
-
-          <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
-            {saving && <span className="loading loading-spinner loading-sm"></span>}
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
-        </form>
+        )}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setConfirmOpen(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{getActionConfig(confirmAction).confirmationTitle}</h3>
+            <p className="text-sm text-gray-500 mb-4">{getActionConfig(confirmAction).confirmationMessage}</p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reason (optional)</label>
+              <textarea className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" rows={2} value={confirmReason} onChange={(e) => setConfirmReason(e.target.value)} placeholder="Enter reason..." />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setConfirmOpen(false)} className="px-4 py-2 rounded-xl text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all">
+                Go Back
+              </button>
+              <button onClick={() => submitStatusChange(confirmAction, confirmReason || undefined)} disabled={saving} className="px-4 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-all disabled:opacity-50">
+                {saving ? "Processing..." : "Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
