@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md animate-fade-in-up">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <span className="text-3xl" role="img" aria-label="water drop">💧</span>
+            <img src="/ytpz-mark.svg" alt="YTPZ" className="h-10 w-10" />
           </div>
           <h1 className="text-2xl font-bold text-base-content">Welcome Back</h1>
           <p className="text-sm text-base-content/50 mt-1">Sign in to your account</p>

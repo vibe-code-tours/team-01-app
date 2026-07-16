@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 96" width="420" height="96" role="img" aria-label="Yay Thal Pya Zat">
+  <defs><clipPath id="d1"><path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z"/></clipPath></defs>
+  <rect x="4" y="41" width="12" height="6" rx="3" fill="#F2A65A" opacity="0.45"/>
+  <rect x="0" y="55" width="18" height="6" rx="3" fill="#F2A65A"/>
+  <rect x="6" y="69" width="10" height="6" rx="3" fill="#F2A65A" opacity="0.7"/>
+  <path d="M58 8 C58 8 26 38 26 60 a32 32 0 0 0 64 0 C90 38 58 8 58 8 Z" fill="#0B2545"/>
+  <g clip-path="url(#d1)"><path d="M18 66 c8 0 8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 s8 7 16 7 s8 -7 16 -7 v40 H18 Z" fill="#2CA6A4"/></g>
+  <text x="108" y="48" font-family="Poppins, Inter, Segoe UI, Arial, sans-serif" font-size="30" font-weight="700" fill="#0B2545" letter-spacing="-0.5">Yay Thal Pya Zat</text>
+  <text x="109" y="72" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1C7293" letter-spacing="3.2">WATER, DELIVERED</text>
+</svg>

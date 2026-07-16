@@ -26,7 +26,18 @@ export function Navbar() {
     role?: string;
   } | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const { itemCount } = useCart();
+
+  useEffect(() => {
+    function checkDark() {
+      setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
+    }
+    checkDark();
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     function onScroll() {
@@ -65,12 +76,13 @@ export function Navbar() {
         {/* Logo */}
         <Link
           href="/"
-          className={`flex items-center gap-2 font-bold text-lg transition-colors duration-200 ${scrolled ? "text-white" : "text-primary"}`}
+          className="flex items-center"
         >
-          <span className="text-2xl" role="img" aria-label="water drop">
-            💧
-          </span>
-          <span>Yay Thal Pya Zat</span>
+          <img
+            src={scrolled || isDark ? "/ytpz-logo-horizontal-white.svg" : "/ytpz-logo-horizontal.svg"}
+            alt="Yay Thal Pya Zat"
+            className="h-8"
+          />
         </Link>
 
         {/* Desktop Nav */}

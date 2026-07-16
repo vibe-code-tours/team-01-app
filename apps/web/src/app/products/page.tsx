@@ -142,16 +142,7 @@ export default function ProductsPage() {
                       />
                     ) : (
                       <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-10 w-10 text-primary"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        >
-                          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                        </svg>
+                        <img src="/ytpz-mark.svg" alt="YTPZ" className="h-12 w-12" />
                       </div>
                     )}
                   </div>
