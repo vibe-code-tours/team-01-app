@@ -23,6 +23,8 @@ export const orders = pgTable("orders", {
   paymentDetails: text("payment_details"),
   bottleCount: integer("bottle_count"),
   adminNotes: text("admin_notes"),
+  deliveryPersonId: text("delivery_person_id"),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
