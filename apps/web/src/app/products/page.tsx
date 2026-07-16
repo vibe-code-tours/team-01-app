@@ -133,12 +133,12 @@ export default function ProductsPage() {
                   key={product.id}
                   className="bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 animate-fade-in-up"
                 >
-                  <div className="h-40 bg-gradient-to-br from-primary/5 to-cyan-600/5 flex items-center justify-center overflow-hidden">
+                  <div className="h-48 bg-gradient-to-br from-primary/5 to-cyan-600/5 flex items-center justify-center overflow-hidden">
                     {product.imageUrl ? (
                       <img
                         src={getImageSrc(product.imageUrl)}
                         alt={product.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain p-2"
                       />
                     ) : (
                       <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center">
