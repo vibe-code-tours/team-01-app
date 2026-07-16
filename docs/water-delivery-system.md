@@ -40,20 +40,91 @@ Water delivery management system (Yay Thal Pya Zat) with manual payment approval
 
 ---
 
-## Order Status Flow
+## Order Types & Status Workflow
 
-### Retail / Coupon Delivery
+### Type 1: Retail Order
+Products bought from the store (bottles, pumps, accessories).
+
 ```
-pending → paid → approved → scheduled → assigned → delivered
-   ↓        ↓       ↓           ↓           ↓
-rejected cancelled cancelled  cancelled  cancelled
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          RETAIL ORDER WORKFLOW                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────┐   User    ┌─────────┐   Admin   ┌──────────┐   User    ┌────────────┐ │
+│  │ PENDING │ ────────→ │  PAID   │ ────────→ │ APPROVED │ ────────→ │ SCHEDULED  │ │
+│  │         │  uploads  │         │  reviews  │          │  books    │            │ │
+│  │         │  proof +   │         │  proof    │          │  delivery │            │ │
+│  │         │  confirms  │         │           │          │  slot     │            │ │
+│  └────┬────┘           └────┬────┘           └────┬─────┘           └─────┬──────┘ │
+│       │                     │                     │                       │        │
+│       │ User                │ Admin               │                       │ Admin  │
+│       │ cancels             │ rejects             │                       │ assigns│
+│       ↓                     ↓                     ↓                       ↓        │
+│  ┌──────────┐         ┌──────────┐         ┌──────────┐             ┌──────────┐ │
+│  │CANCELLED │         │ REJECTED │         │CANCELLED │             │ ASSIGNED │ │
+│  └──────────┘         └──────────┘         └──────────┘             └────┬─────┘ │
+│                                                                          │       │
+│                                                                  Delivery Person  │
+│                                                                  marks delivered   │
+│                                                                          │       │
+│                                                                          ↓       │
+│                                                                    ┌──────────┐ │
+│                                                                    │DELIVERED │ │
+│                                                                    └──────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Subscription
+### Type 2: Subscription Order
+Monthly coupon plans (Starter/Regular/Premium). No delivery scheduling — just coupon issuance.
+
 ```
-pending → paid → approved (terminal — coupons issued)
-   ↓        ↓
-rejected cancelled
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       SUBSCRIPTION ORDER WORKFLOW                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────┐   User    ┌─────────┐   Admin   ┌──────────┐                  │
+│  │ PENDING │ ────────→ │  PAID   │ ────────→ │ APPROVED │ ← TERMINAL      │
+│  │         │  uploads  │         │  reviews  │          │   Coupons issued │
+│  │         │  proof +   │         │  proof    │          │   to user        │
+│  │         │  confirms  │         │           │          │                  │
+│  └────┬────┘           └────┬────┘           └──────────┘                  │
+│       │                     │                                              │
+│       │ User                │ Admin                                        │
+│       │ cancels             │ rejects                                      │
+│       ↓                     ↓                                              │
+│  ┌──────────┐         ┌──────────┐                                        │
+│  │CANCELLED │         │ REJECTED │                                        │
+│  └──────────┘         └──────────┘                                        │
+│                                                                             │
+│  After approval: User uses coupons to create coupon-delivery orders.        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Type 3: Coupon Delivery
+User uses subscription coupons to order 20L water bottles.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      COUPON DELIVERY WORKFLOW                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌───────────┐  User     ┌──────────┐  Admin    ┌──────────┐              │
+│  │ SCHEDULED │ ────────→ │ ASSIGNED │ ────────→ │DELIVERED │              │
+│  │           │  selects  │          │  assigns  │          │              │
+│  │           │  slot +   │          │  delivery │          │              │
+│  │           │  enters   │          │  person   │          │              │
+│  │           │  address  │          │           │          │              │
+│  └─────┬─────┘          └──────────┘           └──────────┘              │
+│        │                                                                    │
+│        │ User cancels                                                       │
+│        ↓                                                                    │
+│  ┌──────────┐                                                               │
+│  │CANCELLED │  Coupons returned to user                                     │
+│  └──────────┘                                                               │
+│                                                                             │
+│  Note: Coupon deliveries skip "pending" and "paid" — no payment needed.    │
+│  Note: Only "scheduled" and "pending" can be cancelled.                    │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Status definitions:**
