@@ -106,6 +106,12 @@ export default function SchedulesPage() {
     setCreating(true);
     setFormMsg("");
 
+    if (!formIsProvinceWide && formTownshipIds.length === 0) {
+      setCreating(false);
+      setFormMsg("Please select at least one township");
+      return;
+    }
+
     const body: Record<string, unknown> = {
       provinceId: formProvinceId,
       dates: formDates,
@@ -272,28 +278,40 @@ export default function SchedulesPage() {
             )}
 
             {/* Township Checkboxes */}
-            {!formIsProvinceWide && formProvinceId && (
+            {formProvinceId && !formIsProvinceWide && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Townships</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Select Townships <span className="text-red-500">*</span>
+                </label>
                 {formTownships.length === 0 ? (
                   <p className="text-sm text-gray-500">No active townships in this province.</p>
                 ) : (
                   <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto">
-                    <button type="button" className="text-xs text-primary font-medium hover:text-primary/80 mb-2 transition-colors" onClick={selectAllTownships}>
-                      Select All
-                    </button>
-                    {formTownships.map((t) => (
-                      <label key={t.id} className="flex items-center gap-2.5 cursor-pointer py-1.5">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm border-gray-300 checked:bg-primary checked:border-primary"
-                          checked={formTownshipIds.includes(t.id)}
-                          onChange={() => toggleTownship(t.id)}
-                        />
-                        <span className="text-sm text-gray-700">{t.name}</span>
-                      </label>
-                    ))}
+                    <div className="flex items-center justify-between mb-2">
+                      <button type="button" className="text-xs text-primary font-medium hover:text-primary/80 transition-colors" onClick={selectAllTownships}>
+                        Select All
+                      </button>
+                      {formTownshipIds.length > 0 && (
+                        <span className="text-xs text-gray-400">{formTownshipIds.length} selected</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1">
+                      {formTownships.map((t) => (
+                        <label key={t.id} className={`flex items-center gap-2.5 cursor-pointer py-1.5 px-2 rounded-lg transition-colors ${formTownshipIds.includes(t.id) ? "bg-primary/5" : "hover:bg-gray-50"}`}>
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-sm border-gray-300 checked:bg-primary checked:border-primary"
+                            checked={formTownshipIds.includes(t.id)}
+                            onChange={() => toggleTownship(t.id)}
+                          />
+                          <span className="text-sm text-gray-700">{t.name}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
+                )}
+                {formTownshipIds.length === 0 && (
+                  <p className="text-xs text-amber-600 mt-1">Please select at least one township</p>
                 )}
               </div>
             )}
