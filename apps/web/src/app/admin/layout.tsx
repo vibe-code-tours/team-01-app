@@ -7,7 +7,7 @@ import { fetchSession, signOut } from "@/lib/api-client";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { NotificationProvider, useNotifications } from "@/lib/notification-context";
 import { NotificationBell } from "@/components/NotificationBell";
-import { getSocket, onSocketReady } from "@/lib/socket";
+import { getSocket, onSocketReady, connectSocket } from "@/lib/socket";
 
 function AdminSocketListener() {
   const { addToast } = useNotifications();
@@ -95,6 +95,9 @@ export default function AdminLayout({
 
       setUser({ name: userData.name, email: userData.email, role: userData.role || "" });
       setAuthorized(true);
+
+      // Ensure socket is connected for real-time updates
+      connectSocket();
     }
     checkAuth();
   }, [router]);
