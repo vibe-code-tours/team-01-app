@@ -51,14 +51,14 @@ export const auth = betterAuth({
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",
-      secure: false,
+      secure: true,
     },
   },
   plugins: [
     passkey({
       rpName: "Water Delivery",
       rpID: "localhost",
-      origin: process.env.BETTER_AUTH_URL || "http://localhost:3001",
+      origin: process.env.BETTER_AUTH_URL || process.env.API_CORS_ORIGIN || "http://localhost:3001",
     }),
     twoFactor({
       issuer: "Water Delivery",

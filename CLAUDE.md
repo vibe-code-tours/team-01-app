@@ -19,9 +19,10 @@
 | Database  | PostgreSQL 16                             |
 | Cache     | Redis 7                                   |
 | Real-time | Socket.IO v4                              |
-| Auth      | JWT + bcryptjs                            |
+| Auth      | better-auth (JWT)                         |
 | Runtime   | Node.js 22                                |
 | Monorepo  | npm workspaces                            |
+| Brand     | YTPZ Brand Guide v1.0                     |
 
 ## Project Structure
 
@@ -32,58 +33,76 @@ water-delivery/
 │   │   ├── src/
 │   │   │   ├── index.ts          # Entry: Hono app + Socket.IO + HTTP server
 │   │   │   ├── config/env.ts     # Environment variables
-│   │   │   ├── routes/           # Hono routers (auth.ts, health.ts)
-│   │   │   ├── middleware/       # Auth, error handling middleware
-│   │   │   └── ws/              # Socket.IO handlers
+│   │   │   ├── lib/
+│   │   │   │   ├── auth.ts       # better-auth config
+│   │   │   │   ├── io.ts         # Socket.IO instance getter
+│   │   │   │   └── notifications.ts  # Notification + socket emission
+│   │   │   ├── routes/           # Hono routers
+│   │   │   ├── middleware/       # Auth, error handling
+│   │   │   └── ws/index.ts      # Socket.IO setup
 │   │   ├── Dockerfile
-│   │   └── package.json          # @water-delivery/api
-│   └── web/           # Next.js landing page (port 3000)
+│   │   └── package.json
+│   └── web/           # Next.js app (port 3000)
 │       ├── src/
 │       │   ├── app/              # App Router pages
-│       │   │   ├── page.tsx
-│       │   │   ├── layout.tsx
-│       │   │   ├── products/page.tsx
-│       │   │   ├── subscription/page.tsx
-│       │   │   ├── pricing/page.tsx
-│       │   │   ├── about/page.tsx
-│       │   │   └── contact/page.tsx
-│       │   └── components/       # Shared UI components (Navbar, Footer)
+│       │   │   ├── page.tsx              # Home
+│       │   │   ├── layout.tsx            # Root layout (theme: ytpz)
+│       │   │   ├── products/page.tsx     # Product listing
+│       │   │   ├── subscription/page.tsx # Subscription plans
+│       │   │   ├── dashboard/page.tsx    # User dashboard
+│       │   │   ├── orders/[id]/page.tsx  # Order detail
+│       │   │   ├── cart/page.tsx         # Shopping cart
+│       │   │   ├── (auth)/login/page.tsx
+│       │   │   ├── (auth)/signup/page.tsx
+│       │   │   ├── admin/               # Admin panel
+│       │   │   │   ├── layout.tsx
+│       │   │   │   ├── page.tsx         # Dashboard
+│       │   │   │   ├── orders/          # Order management
+│       │   │   │   ├── assignments/     # Delivery assignment
+│       │   │   │   ├── products/        # Product CRUD
+│       │   │   │   ├── schedules/       # Schedule management
+│       │   │   │   └── users/           # User management
+│       │   │   ├── delivery/page.tsx    # Delivery person dashboard
+│       │   │   └── api/                # Next.js API routes (proxy)
+│       │   ├── components/
+│       │   │   ├── Navbar.tsx
+│       │   │   ├── Footer.tsx
+│       │   │   ├── NotificationBell.tsx
+│       │   │   ├── Toast.tsx
+│       │   │   ├── Providers.tsx
+│       │   │   └── admin/
+│       │   │       ├── Sidebar.tsx
+│       │   │       ├── StatusBadge.tsx
+│       │   │       └── Pagination.tsx
+│       │   └── lib/
+│       │       ├── api-client.ts        # fetch helpers
+│       │       ├── socket.ts            # Socket.IO client
+│       │       ├── order-status.ts      # Status transition rules
+│       │       ├── notification-context.tsx
+│       │       ├── cart-context.tsx
+│       │       └── auth.ts
 │       ├── Dockerfile
-│       ├── next.config.ts
-│       ├── postcss.config.mjs    # Tailwind CSS v4 + DaisyUI v5
-│       └── package.json          # @water-delivery/web
+│       └── package.json
 ├── packages/
 │   ├── db/            # Drizzle ORM
 │   │   ├── src/
-│   │   │   ├── db.ts             # Connection singleton
-│   │   │   ├── index.ts          # Barrel export
-│   │   │   └── schema/           # Table definitions (users.ts)
-│   │   ├── drizzle.config.ts
-│   │   └── package.json          # @water-delivery/db
+│   │   │   ├── db.ts
+│   │   │   ├── index.ts
+│   │   │   ├── schema/           # Table definitions
+│   │   │   │   ├── users.ts
+│   │   │   │   ├── orders.ts
+│   │   │   │   ├── products.ts
+│   │   │   │   ├── delivery.ts
+│   │   │   │   ├── notifications.ts
+│   │   │   │   └── ...
+│   │   │   ├── migrations/
+│   │   │   └── seed.ts
+│   │   └── package.json
 │   └── shared/        # Shared types & constants
-│       ├── src/
-│       │   ├── index.ts           # Barrel export
-│       │   ├── types/            # API response, auth types
-│       │   └── constants/       # Roles, statuses
-│       └── package.json          # @water-delivery/shared
-├── .devcontainer/
-│   ├── devcontainer.json         # VS Code devcontainer config
-│   ├── Dockerfile                # Dev container (Node.js 22 + tools)
-│   └── claude-env.sh             # Vibe proxy + Claude Code setup
-├── .claude/
-│   ├── commands/                # Slash commands
-│   │   ├── dev.md               # /dev
-│   │   ├── migrate.md           # /migrate
-│   │   └── db-push.md           # /db-push
-│   └── docs/                    # Reference docs
-│       ├── backend.md           # Hono + Socket.IO specialist
-│       ├── frontend.md          # Next.js + DaisyUI specialist
-│       ├── database.md          # PostgreSQL + Drizzle specialist
-│       ├── water-delivery-stack.md
-│       └── docker-compose.md
+│       └── package.json
 ├── docker-compose.yml
-├── CLAUDE.md                    # This file — project conventions
-└── package.json                 # Root workspace config
+├── CLAUDE.md
+└── package.json
 ```
 
 ## Coding Standards
@@ -114,6 +133,15 @@ water-delivery/
 | api      | 3001 | Hot-reload via volume mount       |
 | web      | 3000 | Hot-reload via volume mount       |
 
+## Theme
+
+- **Theme name**: `ytpz` (default light), `dark` (prefersdark)
+- **Primary**: Deep Well Navy `#0B2545`
+- **Secondary**: Fresh Aqua `#2CA6A4`
+- **Accent**: Delivery Amber `#F2A65A`
+- **Fonts**: Poppins (headings), Inter (body)
+- Set on `<html data-theme="ytpz">`
+
 ## MCP Servers
 
 | MCP        | Purpose                          |
@@ -122,31 +150,23 @@ water-delivery/
 | github     | PRs, issues, repo management     |
 | playwright | Browser testing for landing page |
 
-## Custom Commands
-
-- `/dev` — Start all Docker services
-- `/migrate` — Run Drizzle migrations
-- `/db-push` — Push schema changes (dev only)
-
 ## Domain Specialists
-
-When working on specific areas, focus on these patterns:
 
 ### Backend (apps/api)
 
 - Hono routers: `const routes = new Hono();`
-- Mount in `src/index.ts`: `app.route("/<resource>", <resource>Routes)`
-- Auth middleware on protected routes: `route.use(authMiddleware)`
-- Socket.IO rooms per user: `socket.join(\`user:\${userId}\`)`
-- Schema from `@water-delivery/db`, types from `@water-delivery/shared`
+- Mount in `src/index.ts`: `app.route("/api/<resource>", <resource>Routes)`
+- Auth middleware on protected routes: `routes.use(authMiddleware)`
+- Socket.IO: join rooms `user:{userId}` and `admins`
+- Order status transitions validated in PATCH handler
 
 ### Frontend (apps/web)
 
 - `"use client"` only when needed (event handlers, useState, useEffect)
 - Prefer server components for data-fetching pages
-- DaisyUI component classes: btn, card, navbar, hero, etc.
-- DaisyUI v5 CSS: `@import "tailwindcss"; @plugin "daisyui";` — no tailwind.config.js
-- Theme on `<html data-theme="water">`
+- DaisyUI v5: `@import "tailwindcss"; @plugin "daisyui";`
+- Theme: `data-theme="ytpz"`
+- Socket.IO: use `connectSocket()`, `getSocket()`, `onSocketReady()`
 
 ### Database (packages/db)
 
@@ -154,5 +174,4 @@ When working on specific areas, focus on these patterns:
 - `uuid("id").defaultRandom().primaryKey()` for PKs
 - `timestamp("created_at", { withTimezone: true }).defaultNow()` for timestamps
 - `pgEnum()` for enums (role, status, etc.)
-- Table names: lowercase plural, one table per file
-- Generate + migrate: `docker compose exec api npx drizzle-kit generate` then `docker compose exec api npx drizzle-kit migrate`
+- Migrations: `npx drizzle-kit generate` then `npx drizzle-kit migrate`
