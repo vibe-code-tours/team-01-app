@@ -22,7 +22,7 @@
     "db:reseed": "npm run db:reseed --workspace=@water-delivery/db"
   },
   "devDependencies": {
-    "prettier": "^3.3.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.7.0"
   },
   "dependencies": {
